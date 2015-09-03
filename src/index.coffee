@@ -1,19 +1,5 @@
 ZooUserStringGetter = require 'zooniverse-user-string-getter'
 
-###
-dummy NOOP experiment server to ensure Geordi client still works even when
-no experiment server client specified.
-###
-DummyExperimentServerClient = class ExperimentServerClient
-  currentCohort: null
-  ACTIVE_EXPERIMENT: null
-  getCohort: ->
-    eventualCohort = new $.Deferred()
-    eventualCohort
-    .then ->
-      eventualCohort.resolve null
-    eventualCohort.promise()
-
 module.exports = class GeordiClient
 
   GEORDI_STAGING_SERVER_URL:
@@ -31,7 +17,6 @@ module.exports = class GeordiClient
     null
 
   defaultProjectToken: "unspecified"
-  defaultExperimentServerClient: new DummyExperimentServerClient()
 
   getCurrentSubject: @defaultSubjectGetter
   getCurrentUserID: @defaultZooUserIDGetter
@@ -40,13 +25,12 @@ module.exports = class GeordiClient
     config["server"] = "staging" if not "server" of config
     config["projectToken"] = @defaultProjectToken if (not "projectToken" of config) or (not config["projectToken"] instanceof String) or (not config["projectToken"].length>0)
     config["zooUserIDGetter"] = @defaultZooUserIDGetter if (not "zooUserIDGetter" of config) or (not config["zooUserIDGetter"] instanceof Function)
-    config["experimentServerClient"] = @defaultExperimentServerClient if not "experimentServerClient" of config
     config["subjectGetter"] = @defaultSubjectGetter if (not "subjectGetter" of config) or (not config["subjectGetter"] instanceof Function)
     if config["server"] == "production"
       @GEORDI_SERVER_URL = @GEORDI_PRODUCTION_SERVER_URL
     else
       @GEORDI_SERVER_URL = @GEORDI_STAGING_SERVER_URL
-    @experimentServerClient = config["experimentServerClient"]
+    @experimentServerClient = config["experimentServerClient"] if "experimentServerClient" of config
     @getCurrentSubject = config["subjectGetter"]
     @getCurrentUserID = config["zooUserIDGetter"]
     @projectToken = config["projectToken"]
@@ -111,11 +95,12 @@ module.exports = class GeordiClient
     eventData['relatedID'] = related_id
     eventData['serverURL'] = location.origin
     eventData['data'] = JSON.stringify({})
-    eventData['experiment'] = @experimentServerClient.ACTIVE_EXPERIMENT
     eventData['errorCode'] = ""
     eventData['errorDescription'] = ""
-    if @experimentServerClient.currentCohort?
-      eventData['cohort'] = @experimentServerClient.currentCohort
+    if @experimentServerClient?
+      eventData['experiment'] = @experimentServerClient.ACTIVE_EXPERIMENT
+      if @experimentServerClient.currentCohort?
+        eventData['cohort'] = @experimentServerClient.currentCohort
     eventData['userID'] = "(anonymous)"
     eventData
 
@@ -127,7 +112,7 @@ module.exports = class GeordiClient
     eventData = @buildEventData(type, related_id, subject_id)
     @addUserDetailsToEventData(eventData)
     .always (eventData) =>
-      if @experimentServerClient.ACTIVE_EXPERIMENT==null or @experimentServerClient.currentCohort?
+      if (not @experimentServerClient?) or @experimentServerClient.ACTIVE_EXPERIMENT==null or @experimentServerClient.currentCohort?
         @logToGeordi eventData
         @logToGoogle eventData
       else
