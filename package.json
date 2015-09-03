@@ -1,5 +1,5 @@
 {
-  "name": "geordi-client",
+  "name": "zooniverse-geordi-client",
   "version": "1.0.0",
   "description": "A JavaScript client for the Geordi analytics capture engine",
   "main": "index.js",
