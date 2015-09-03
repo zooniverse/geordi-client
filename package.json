@@ -1,0 +1,26 @@
+{
+  "name": "geordi-client",
+  "version": "1.0.0",
+  "description": "A JavaScript client for the Geordi analytics capture engine",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zooniverse/geordi-client.git"
+  },
+  "keywords": [
+    "geordi",
+    "zooniverse",
+    "analytics",
+    "client",
+    "javascript"
+  ],
+  "author": "Alex Bowyer <alex.bowyer@zooniverse.org> (http://www.zooniverse.org)",
+  "license": "Apache",
+  "bugs": {
+    "url": "https://github.com/zooniverse/geordi-client/issues"
+  },
+  "homepage": "https://github.com/zooniverse/geordi-client"
+}
