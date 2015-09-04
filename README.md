@@ -65,5 +65,9 @@ This client will soon be updated to support the new fields and use a more versat
 
 # A note on Experimental Server integration
 
-Geordi and the Geordi Client are also designed to integrate with the Zooniverse Experiment Server. This not currently documented as the Experimental Server client code is about to undergo a major refactoring.
+Geordi and the Geordi Client are also designed to integrate with the [Zooniverse Experiment Server](https://github.com/zooniverse/ZooniverseExperimentServer). This not currently documented as the Experimental Server client code is about to undergo a major refactoring.
 Refer to the Snapshot Serengeti codebase [here](https://github.com/alexbfree/Serengeti/blob/converting-geordi-to-component/app/lib/geordi_and_experiments_setup.coffee) to see how this can work, or talk to Alex Bowyer for more information.
+
+# References
+
+Please refer to the [Geordi documentation](https://github.com/zooniverse/geordi/blob/master/README.md) for more information on logging events to Geordi and the work this client does for you.
