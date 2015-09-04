@@ -48,10 +48,9 @@ The [`zooniverse-user-string-getter`](https://github.com/zooniverse/zooniverse-u
 
 You can log errors to Geordi as in this CoffeeScript example:
 ```
-subjectID = "ASG00312"
-Geordi.logError "409", "Couldn't POST subject "+subjectID+" to experiment server to mark as seen", "error", "123-456", subjectID
+Geordi.logError "409", "Couldn't POST subject", "error", "123-456", "ASG00312"
 ```
-This would log an event of type `error`, with error code `409` an error description `Couldn't POST subject ASG00312 to experiment server to mark as seen`. The related ID would be passed as `"123-456"` and the subject ID set to `"ASG00312"`.
+This would log an event of type `error`, with error code `409` an error description `Couldn't POST subject`. The related ID would be passed as `"123-456"` and the subject ID set to `"ASG00312"`.
 The first three parameters are compulsory, the relatedID and subjectID parameters are optiona.
 The provided `subjectGetter` will be used if subjectID is omitted.
 Related ID will be set to NULL if omitted.
