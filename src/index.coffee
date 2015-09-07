@@ -121,12 +121,18 @@ module.exports = class GeordiClient
       # single parameter assumed to be type
     else if typeof(parameter)=="object"
       # get params
-      eventData = updateEventDataFromParameterObject parameter, eventData
+      if not ("type" in parameter and typeof(parameter['type'])=="string" and parameter['type'].length>0)
+        eventData["errorCode"] = "GCP01"
+        eventData["errorDescription"] = "missing 'type' when calling logEvent in Geordi client"
+        eventData["type"] = "error"
+      else
+        eventData = updateEventDataFromParameterObject parameter, eventData
       if not ("subjectID" in eventData and typeof(parameterObject[field])=="string" and parameterObject[field].length>0)
         eventData["subjectID"] = @getCurrentSubject()
     else
-      eventData["errorCode"] = "GCP01"
+      eventData["errorCode"] = "GCP02"
       eventData["errorDescription"] = "bad parameter passed to logEvent in Geordi Client"
+      eventData["type"] = "error"
     @addUserDetailsToEventData(eventData)
     .always (eventData) =>
       if (not @experimentServerClient?) or @experimentServerClient.ACTIVE_EXPERIMENT==null or @experimentServerClient.currentCohort?

@@ -186,13 +186,20 @@
       if (typeof parameter === "string") {
 
       } else if (typeof parameter === "object") {
-        eventData = updateEventDataFromParameterObject(parameter, eventData);
+        if (!(indexOf.call(parameter, "type") >= 0 && typeof parameter['type'] === "string" && parameter['type'].length > 0)) {
+          eventData["errorCode"] = "GCP01";
+          eventData["errorDescription"] = "missing 'type' when calling logEvent in Geordi client";
+          eventData["type"] = "error";
+        } else {
+          eventData = updateEventDataFromParameterObject(parameter, eventData);
+        }
         if (!(indexOf.call(eventData, "subjectID") >= 0 && typeof parameterObject[field] === "string" && parameterObject[field].length > 0)) {
           eventData["subjectID"] = this.getCurrentSubject();
         }
       } else {
-        eventData["errorCode"] = "GCP01";
+        eventData["errorCode"] = "GCP02";
         eventData["errorDescription"] = "bad parameter passed to logEvent in Geordi Client";
+        eventData["type"] = "error";
       }
       return this.addUserDetailsToEventData(eventData).always((function(_this) {
         return function(eventData) {
