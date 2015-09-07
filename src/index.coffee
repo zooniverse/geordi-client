@@ -103,11 +103,11 @@ module.exports = class GeordiClient
 
   updateEventDataFromParameterObject: (parameterObject, eventData = {}) ->
     for field in ["userID","subjectID","relatedID","errorCode","errorDescription","projectToken","serverURL","experiment","cohort","type"]
-      if field in parameterObject and typeof(parameterObject[field])=="string" and parameterObject[field].length>0
+      if field of parameterObject and typeof(parameterObject[field])=="string" and parameterObject[field].length>0
         eventData[field] = parameterObject[field]
-    if "data" in parameterObject and typeof(parameterObject["data"])=="object"
+    if "data" of parameterObject and typeof(parameterObject["data"])=="object"
       eventData["data"]=JSON.stringify(parameterObject["data"])
-    if "browserTime" in parameterObject and typeof(parameterObject["browserTime"])=="number" and parameterObject["browserTime"]>1441062000000 # Sep 1, 2015
+    if "browserTime" of parameterObject and typeof(parameterObject["browserTime"])=="number" and parameterObject["browserTime"]>1441062000000 # Sep 1, 2015
       eventData["browserTime"]=parameterObject["browserTime"]
     eventData
 
@@ -122,13 +122,13 @@ module.exports = class GeordiClient
       eventData["type"] = parameter
     else if typeof(parameter)=="object"
       # get params
-      if not ("type" in parameter and typeof(parameter['type'])=="string" and parameter['type'].length>0)
+      if not ("type" of parameter and typeof(parameter.type)=="string" and parameter.type.length>0)
         eventData["errorCode"] = "GCP01"
         eventData["errorDescription"] = "missing 'type' when calling logEvent in Geordi client"
         eventData["type"] = "error"
       else
         eventData = updateEventDataFromParameterObject parameter, eventData
-      if not ("subjectID" in eventData and typeof(parameterObject[field])=="string" and parameterObject[field].length>0)
+      if not ("subjectID" of eventData and typeof(parameterObject[field])=="string" and parameterObject[field].length>0)
         eventData["subjectID"] = @getCurrentSubject()
     else
       eventData["errorCode"] = "GCP02"
