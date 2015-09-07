@@ -184,7 +184,7 @@
       var eventData;
       eventData = this.buildEventData();
       if (typeof parameter === "string") {
-
+        eventData["type"] = parameter;
       } else if (typeof parameter === "object") {
         if (!(indexOf.call(parameter, "type") >= 0 && typeof parameter['type'] === "string" && parameter['type'].length > 0)) {
           eventData["errorCode"] = "GCP01";

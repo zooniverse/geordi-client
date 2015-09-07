@@ -119,6 +119,7 @@ module.exports = class GeordiClient
     eventData = @buildEventData()
     if typeof(parameter)=="string"
       # single parameter assumed to be type
+      eventData["type"] = parameter
     else if typeof(parameter)=="object"
       # get params
       if not ("type" in parameter and typeof(parameter['type'])=="string" and parameter['type'].length>0)
