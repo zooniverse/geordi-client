@@ -192,7 +192,7 @@
         } else {
           eventData = this.updateEventDataFromParameterObject(parameter, eventData);
         }
-        if (!("subjectID" in eventData && typeof parameter.field === "string" && parameter.field.length > 0)) {
+        if (!("subjectID" in eventData && typeof parameter.subjectID === "string" && parameter.subjectID.length > 0)) {
           eventData["subjectID"] = this.getCurrentSubject();
         }
       } else {

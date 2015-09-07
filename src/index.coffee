@@ -128,7 +128,7 @@ module.exports = class GeordiClient
         eventData["type"] = "error"
       else
         eventData = @updateEventDataFromParameterObject parameter, eventData
-      if not ("subjectID" of eventData and typeof(parameter.field)=="string" and parameter.field.length>0)
+      if not ("subjectID" of eventData and typeof(parameter.subjectID)=="string" and parameter.subjectID.length>0)
         eventData["subjectID"] = @getCurrentSubject()
     else
       eventData["errorCode"] = "GCP02"
