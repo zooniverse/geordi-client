@@ -85,31 +85,48 @@ module.exports = class GeordiClient
       eventualEventData.resolve eventData
     eventualEventData.promise()
 
-  buildEventData: (type, related_id = null,
-                   subject_id = @getCurrentSubject()) =>
-    eventData = {}
+  buildEventData: (eventData = {}) =>
     eventData['browserTime'] = Date.now()
     eventData['projectToken'] = @projectToken
-    eventData['subjectID'] = subject_id
-    eventData['type'] = type
-    eventData['relatedID'] = related_id
     eventData['serverURL'] = location.origin
-    eventData['data'] = JSON.stringify({})
     eventData['errorCode'] = ""
     eventData['errorDescription'] = ""
     if @experimentServerClient?
       eventData['experiment'] = @experimentServerClient.ACTIVE_EXPERIMENT
       if @experimentServerClient.currentCohort?
         eventData['cohort'] = @experimentServerClient.currentCohort
-    eventData['userID'] = "(anonymous)"
+    if @UserStringGetter.currentUserID?
+      eventData['userID'] = @UserStringGetter.currentUserID
+    else
+      eventData['userID'] = @UserStringGetter.ANONYMOUS
+    eventData
+
+  updateEventDataFromParameterObject: (parameterObject, eventData = {}) ->
+    for field in ["userID","subjectID","relatedID","errorCode","errorDescription","projectToken","serverURL","experiment","cohort","type"]
+      if field in parameterObject and typeof(parameterObject[field])=="string" and parameterObject[field].length>0
+        eventData[field] = parameterObject[field]
+    if "data" in parameterObject and typeof(parameterObject["data"])=="object"
+      eventData["data"]=JSON.stringify(parameterObject["data"])
+    if "browserTime" in parameterObject and typeof(parameterObject["browserTime"])=="number" and parameterObject["browserTime"]>1441062000000 # Sep 1, 2015
+      eventData["browserTime"]=parameterObject["browserTime"]
     eventData
 
   ###
   This will log a user interaction both in the Geordi
   analytics API and in Google Analytics.
   ###
-  logEvent: (type, related_id = '', subject_id = @getCurrentSubject()) =>
-    eventData = @buildEventData(type, related_id, subject_id)
+  logEvent: (parameter) =>
+    eventData = @buildEventData()
+    if typeof(parameter)=="string"
+      # single parameter assumed to be type
+    else if typeof(parameter)=="object"
+      # get params
+      eventData = updateEventDataFromParameterObject parameter, eventData
+      if not ("subjectID" in eventData and typeof(parameterObject[field])=="string" and parameterObject[field].length>0)
+        eventData["subjectID"] = @getCurrentSubject()
+    else
+      eventData["errorCode"] = "GCP01"
+      eventData["errorDescription"] = "bad parameter passed to logEvent in Geordi Client"
     @addUserDetailsToEventData(eventData)
     .always (eventData) =>
       if (not @experimentServerClient?) or @experimentServerClient.ACTIVE_EXPERIMENT==null or @experimentServerClient.currentCohort?
@@ -120,20 +137,3 @@ module.exports = class GeordiClient
         .always (eventData) =>
           @logToGeordi eventData
           @logToGoogle eventData
-
-  ###
-  This will log an error in Geordi only.
-  In order to guarantee that this works, no new AJAX
-  calls for cohort or user IP are initiated
-  ###
-  logError: (error_code, error_description, type,
-             related_id = '', subject_id = @getCurrentSubject()) =>
-    eventData = buildEventData(type, related_id, subject_id)
-    eventData['errorCode'] = error_code
-    eventData['errorDescription'] = error_description
-    if @UserStringGetter.currentUserID?
-      eventData['userID'] = @UserStringGetter.currentUserID
-    else
-      eventData['userID'] = @UserStringGetter.ANONYMOUS
-    @logToGeordi eventData
-

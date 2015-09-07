@@ -38,29 +38,38 @@ Geordi = new GeordiClient({
 ```
 If necessary, this can be added into a setup file, as shown in Snapshot Serengeti [here](https://github.com/alexbfree/Serengeti/blob/converting-geordi-to-component/app/lib/geordi_and_experiments_setup.coffee). This linked example also shows how to initialize Geordi when using an experiment server such as the [Zooniverse Experiment Server](https://github.com/zooniverse/ZooniverseExperimentServer) as well. 
 
-Once Geordi is loaded into your JavaScript namespace, you can log events to Geordi as follows in this CoffeeScript example:
+Once Geordi is loaded into your JavaScript namespace, you can log an event very simply to Geordi as follows in this one-line CoffeeScript example:
 ```
-Geordi.logEvent 'classify','123-456','ASG00312'
+Geordi.logEvent 'classify'
 ```
-This would log an event of type `"classify"`, with relatedID `"123-456"` and subject ID of `"ASG00312"`
-The first two parameters are compulsory, the subjectID parameter is optional and the provided `subjectGetter` will be used if it is omitted.
+This would log an event of `type` `"classify"`.
+
+The `projectToken` will be set as specified in your configuration, the `userID` and `subjectID` will be automatically retrieved using your provided `zooUserIDGetter` and `subjectGetter` respectively, and the `serverURL` and `browserTime` will be set automatically based on the current time and the `location.origin`.
+
+Alternatively, you can pass a parameter object instead of a string, to set multiple parameters at once:
+```
+Geordi.logEvent {
+  'type': 'classify'
+  'relatedID': '123-456'
+  'subjectID': 'ASG00312'
+}
+```
+This will log an event of `type` `"classify"` with a `relatedID` of `"123-456"` and a `subjectID` of `"ASG00312"`
+
 The [`zooniverse-user-string-getter`](https://github.com/zooniverse/zooniverse-user-string-getter) library will be used to obtain the user ID string to pass to Geordi. 
 
-You can log errors to Geordi as in this CoffeeScript example:
-```
-Geordi.logError "409", "Couldn't POST subject", "error", "123-456", "ASG00312"
-```
-This would log an event of type `error`, with error code `409` an error description `Couldn't POST subject`. The related ID would be passed as `"123-456"` and the subject ID set to `"ASG00312"`.
-The first three parameters are compulsory, the relatedID and subjectID parameters are optional.
-The provided `subjectGetter` will be used if subjectID is omitted.
-Related ID will be set to NULL if omitted.
-The [`zooniverse-user-string-getter`](https://github.com/zooniverse/zooniverse-user-string-getter) library will be used to obtain the user ID string to pass to Geordi. 
+You can also use this method to log web application or other errors to Geordi, as in this CoffeeScript example:
 
-# A note on current status
+```
+Geordi.logEvent {
+  'type': 'error'
+  'subjectID': 'ASG00312'
+  'errorCode': '409'
+  'errorDescription': 'Couldn't load subject'
+}
+```
 
-These functions currently do not support overriding of the newly added fields in Geordi v2.1, namely `browserTime`, `serverURL`, `data`, `sessionNumber` and `eventNumber`.
-However, the `serverURL` and `browserTime` fields will be set automatically and passed to Geordi when you call `logEvent` or `logError`.
-This client will soon be updated to support the new fields and use a more versatile parameter format.
+Note, you do not have to use `type` `"error"` for errors.
 
 # A note on Experimental Server integration
 
