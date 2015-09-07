@@ -190,7 +190,7 @@
           eventData["errorDescription"] = "missing 'type' when calling logEvent in Geordi client";
           eventData["type"] = "error";
         } else {
-          eventData = updateEventDataFromParameterObject(parameter, eventData);
+          eventData = this.updateEventDataFromParameterObject(parameter, eventData);
         }
         if (!("subjectID" in eventData && typeof parameterObject[field] === "string" && parameterObject[field].length > 0)) {
           eventData["subjectID"] = this.getCurrentSubject();

@@ -127,7 +127,7 @@ module.exports = class GeordiClient
         eventData["errorDescription"] = "missing 'type' when calling logEvent in Geordi client"
         eventData["type"] = "error"
       else
-        eventData = updateEventDataFromParameterObject parameter, eventData
+        eventData = @updateEventDataFromParameterObject parameter, eventData
       if not ("subjectID" of eventData and typeof(parameterObject[field])=="string" and parameterObject[field].length>0)
         eventData["subjectID"] = @getCurrentSubject()
     else
