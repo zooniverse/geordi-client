@@ -72,7 +72,7 @@ Geordi.logEvent {
 Note, you do not have to use `type` `"error"` for errors.
 
 The list of parameters supported by `logEvent` is: `userID`, `subjectID`, `relatedID`, `errorCode`, `errorDescription`, `projectToken`, `serverURL`, `experiment`, `cohort`, `type`, `browserTime` and `data`. These are all required to be non-zero length strings, except for `data` which must be an object, and `browserTime` which should be a Javascript date in number format, corresponding to a date and time no earlier than midnight, September 1st, 2015.
-The only required field is `type`.
+The only required field is `type`. If `type` is omitted, it will be set to `"error"`.
 
 # A note on Experimental Server integration
 
