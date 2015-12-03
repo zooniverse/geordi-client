@@ -66,9 +66,13 @@ module.exports = class GeordiClient
     @UserStringGetter.getUserIDorIPAddress()
     .then (data) =>
       if data?
+        console.log "getUserID etc from String getter got an ID of "
+        console.log data
+        console.log " which is now being set as current user ID"
         @UserStringGetter.currentUserID = data
     .fail =>
-      @UserStringGetter.currentUserID = @UserStringGetter.ANONYMOUS
+      console.log "attempt to get userID etc from string getter failed, setting current user id to "+@UserStringGetter.UNAVAILABLE
+      @UserStringGetter.currentUserID = @UserStringGetter.UNAVAILABLE
     .always =>
       eventData['userID'] = @UserStringGetter.currentUserID
       eventualUserIdentifier.resolve eventData

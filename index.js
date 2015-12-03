@@ -97,12 +97,16 @@
       this.UserStringGetter.getUserIDorIPAddress().then((function(_this) {
         return function(data) {
           if (data != null) {
+            console.log("getUserID etc from String getter got an ID of ");
+            console.log(data);
+            console.log(" which is now being set as current user ID");
             return _this.UserStringGetter.currentUserID = data;
           }
         };
       })(this)).fail((function(_this) {
         return function() {
-          return _this.UserStringGetter.currentUserID = _this.UserStringGetter.ANONYMOUS;
+          console.log("attempt to get userID etc from string getter failed, setting current user id to " + _this.UserStringGetter.UNAVAILABLE);
+          return _this.UserStringGetter.currentUserID = _this.UserStringGetter.UNAVAILABLE;
         };
       })(this)).always((function(_this) {
         return function() {
