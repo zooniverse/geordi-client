@@ -7,6 +7,8 @@ module.exports = class GeordiClient
   GEORDI_PRODUCTION_SERVER_URL:
     'http://geordi.zooniverse.org/api/events/'
 
+  gettingCohort: false
+
   defaultSubjectGetter: ->
     "(unknown)"
 
@@ -146,7 +148,13 @@ module.exports = class GeordiClient
         @logToGeordi eventData
         @logToGoogle eventData
       else
-        @addCohortToEventData(eventData)
-        .always (eventData) =>
+        if !@gettingCohort
+          @gettingCohort = true
+          @addCohortToEventData(eventData)
+          .always (eventData) =>
+            @logToGeordi eventData
+            @logToGoogle eventData
+            @gettingCohort = false
+        else
           @logToGeordi eventData
           @logToGoogle eventData

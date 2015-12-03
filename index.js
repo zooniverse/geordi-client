@@ -10,6 +10,8 @@
 
     GeordiClient.prototype.GEORDI_PRODUCTION_SERVER_URL = 'http://geordi.zooniverse.org/api/events/';
 
+    GeordiClient.prototype.gettingCohort = false;
+
     GeordiClient.prototype.defaultSubjectGetter = function() {
       return "(unknown)";
     };
@@ -213,10 +215,17 @@
             _this.logToGeordi(eventData);
             return _this.logToGoogle(eventData);
           } else {
-            return _this.addCohortToEventData(eventData).always(function(eventData) {
+            if (!_this.gettingCohort) {
+              _this.gettingCohort = true;
+              return _this.addCohortToEventData(eventData).always(function(eventData) {
+                _this.logToGeordi(eventData);
+                _this.logToGoogle(eventData);
+                return _this.gettingCohort = false;
+              });
+            } else {
               _this.logToGeordi(eventData);
               return _this.logToGoogle(eventData);
-            });
+            }
           }
         };
       })(this));
