@@ -131,11 +131,13 @@ module.exports = class GeordiClient
       if not ("subjectID" of eventData and typeof(parameter.subjectID)=="string" and parameter.subjectID.length>0)
         eventData["subjectID"] = @getCurrentSubject()
     else
-      eventData["errorCode"] = "GCP02"
+      eventData["errorCode"] = "GCP03"
       eventData["errorDescription"] = "bad parameter passed to logEvent in Geordi Client"
       eventData["type"] = "error"
     @addUserDetailsToEventData(eventData)
     .always (eventData) =>
+      if not eventData["userID"]?
+        eventData["userID"]=@UserStringGetter.UNAVAILABLE
       if (not @experimentServerClient?) or @experimentServerClient.ACTIVE_EXPERIMENT==null or @experimentServerClient.currentCohort? or @experimentServerClient.experimentCompleted
         @logToGeordi eventData
         @logToGoogle eventData

@@ -196,12 +196,15 @@
           eventData["subjectID"] = this.getCurrentSubject();
         }
       } else {
-        eventData["errorCode"] = "GCP02";
+        eventData["errorCode"] = "GCP03";
         eventData["errorDescription"] = "bad parameter passed to logEvent in Geordi Client";
         eventData["type"] = "error";
       }
       return this.addUserDetailsToEventData(eventData).always((function(_this) {
         return function(eventData) {
+          if (eventData["userID"] == null) {
+            eventData["userID"] = _this.UserStringGetter.UNAVAILABLE;
+          }
           if ((_this.experimentServerClient == null) || _this.experimentServerClient.ACTIVE_EXPERIMENT === null || (_this.experimentServerClient.currentCohort != null) || _this.experimentServerClient.experimentCompleted) {
             _this.logToGeordi(eventData);
             return _this.logToGoogle(eventData);

@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "zooniverse-user-string-getter": "^1.1.12"
+    "zooniverse-user-string-getter": "^1.1.13"
   },
   "repository": {
     "type": "git",
