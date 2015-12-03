@@ -102,7 +102,7 @@
         };
       })(this)).fail((function(_this) {
         return function() {
-          return _this.UserStringGetter.currentUserID = "(anonymous)";
+          return _this.UserStringGetter.currentUserID = _this.UserStringGetter.ANONYMOUS;
         };
       })(this)).always((function(_this) {
         return function() {
@@ -202,7 +202,7 @@
       }
       return this.addUserDetailsToEventData(eventData).always((function(_this) {
         return function(eventData) {
-          if ((_this.experimentServerClient == null) || _this.experimentServerClient.ACTIVE_EXPERIMENT === null || (_this.experimentServerClient.currentCohort != null)) {
+          if ((_this.experimentServerClient == null) || _this.experimentServerClient.ACTIVE_EXPERIMENT === null || (_this.experimentServerClient.currentCohort != null) || _this.experimentServerClient.experimentCompleted) {
             _this.logToGeordi(eventData);
             return _this.logToGoogle(eventData);
           } else {

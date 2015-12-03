@@ -68,7 +68,7 @@ module.exports = class GeordiClient
       if data?
         @UserStringGetter.currentUserID = data
     .fail =>
-      @UserStringGetter.currentUserID = "(anonymous)"
+      @UserStringGetter.currentUserID = @UserStringGetter.ANONYMOUS
     .always =>
       eventData['userID'] = @UserStringGetter.currentUserID
       eventualUserIdentifier.resolve eventData
@@ -136,7 +136,7 @@ module.exports = class GeordiClient
       eventData["type"] = "error"
     @addUserDetailsToEventData(eventData)
     .always (eventData) =>
-      if (not @experimentServerClient?) or @experimentServerClient.ACTIVE_EXPERIMENT==null or @experimentServerClient.currentCohort?
+      if (not @experimentServerClient?) or @experimentServerClient.ACTIVE_EXPERIMENT==null or @experimentServerClient.currentCohort? or @experimentServerClient.experimentCompleted
         @logToGeordi eventData
         @logToGoogle eventData
       else
