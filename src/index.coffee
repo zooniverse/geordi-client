@@ -63,22 +63,32 @@ module.exports = class GeordiClient
       dataType: 'json'
     }
 
+  ###
+  add the user's details to the event data - but only use IP getting service if we don't currently have a way to identify the user
+  ###
   addUserDetailsToEventData: (eventData) =>
-    eventualUserIdentifier = new $.Deferred
-    @UserStringGetter.getUserIDorIPAddress()
-    .then (data) =>
-      if data?
-        console.log "getUserID etc from String getter got an ID of "
-        console.log data
-        console.log " which is now being set as current user ID"
-        @UserStringGetter.currentUserID = data
-    .fail =>
-      console.log "attempt to get userID etc from string getter failed, setting current user id to "+@UserStringGetter.UNAVAILABLE
-      @UserStringGetter.currentUserID = @UserStringGetter.UNAVAILABLE
-    .always =>
+    eventualEventData = new $.Deferred
+    if @UserStringGetter.currentUserID==@UserStringGetter.ANONYMOUS || @UserStringGetter.currentUserID==@UserStringGetter.UNAVAILABLE
+      @UserStringGetter.getUserIDorIPAddress()
+      .then (data) =>
+        if data?
+          console.log "getUserID etc from String getter got an ID of "
+          console.log data
+          if data!=@UserStringGetter.currentUserID
+            console.log " which is now being set as current user ID"
+            @UserStringGetter.currentUserID = data
+          else
+            console.log " but no need to set it as it already has that value"
+      .fail =>
+        console.log "attempt to get userID etc from string getter failed, setting current user id to "+@UserStringGetter.UNAVAILABLE
+        @UserStringGetter.currentUserID = @UserStringGetter.UNAVAILABLE
+      .always =>
+        eventData['userID'] = @UserStringGetter.currentUserID
+        eventualEventData.resolve eventData
+    else
       eventData['userID'] = @UserStringGetter.currentUserID
-      eventualUserIdentifier.resolve eventData
-    eventualUserIdentifier.promise()
+      eventualEventData.resolve eventData
+    eventualEventData.promise()
 
   addCohortToEventData: (eventData) =>
     eventualEventData = new $.Deferred

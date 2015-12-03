@@ -93,30 +93,44 @@
       });
     };
 
+
+    /*
+    add the user's details to the event data - but only use IP getting service if we don't currently have a way to identify the user
+     */
+
     GeordiClient.prototype.addUserDetailsToEventData = function(eventData) {
-      var eventualUserIdentifier;
-      eventualUserIdentifier = new $.Deferred;
-      this.UserStringGetter.getUserIDorIPAddress().then((function(_this) {
-        return function(data) {
-          if (data != null) {
-            console.log("getUserID etc from String getter got an ID of ");
-            console.log(data);
-            console.log(" which is now being set as current user ID");
-            return _this.UserStringGetter.currentUserID = data;
-          }
-        };
-      })(this)).fail((function(_this) {
-        return function() {
-          console.log("attempt to get userID etc from string getter failed, setting current user id to " + _this.UserStringGetter.UNAVAILABLE);
-          return _this.UserStringGetter.currentUserID = _this.UserStringGetter.UNAVAILABLE;
-        };
-      })(this)).always((function(_this) {
-        return function() {
-          eventData['userID'] = _this.UserStringGetter.currentUserID;
-          return eventualUserIdentifier.resolve(eventData);
-        };
-      })(this));
-      return eventualUserIdentifier.promise();
+      var eventualEventData;
+      eventualEventData = new $.Deferred;
+      if (this.UserStringGetter.currentUserID === this.UserStringGetter.ANONYMOUS || this.UserStringGetter.currentUserID === this.UserStringGetter.UNAVAILABLE) {
+        this.UserStringGetter.getUserIDorIPAddress().then((function(_this) {
+          return function(data) {
+            if (data != null) {
+              console.log("getUserID etc from String getter got an ID of ");
+              console.log(data);
+              if (data !== _this.UserStringGetter.currentUserID) {
+                console.log(" which is now being set as current user ID");
+                return _this.UserStringGetter.currentUserID = data;
+              } else {
+                return console.log(" but no need to set it as it already has that value");
+              }
+            }
+          };
+        })(this)).fail((function(_this) {
+          return function() {
+            console.log("attempt to get userID etc from string getter failed, setting current user id to " + _this.UserStringGetter.UNAVAILABLE);
+            return _this.UserStringGetter.currentUserID = _this.UserStringGetter.UNAVAILABLE;
+          };
+        })(this)).always((function(_this) {
+          return function() {
+            eventData['userID'] = _this.UserStringGetter.currentUserID;
+            return eventualEventData.resolve(eventData);
+          };
+        })(this));
+      } else {
+        eventData['userID'] = this.UserStringGetter.currentUserID;
+        eventualEventData.resolve(eventData);
+      }
+      return eventualEventData.promise();
     };
 
     GeordiClient.prototype.addCohortToEventData = function(eventData) {
