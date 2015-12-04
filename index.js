@@ -220,7 +220,7 @@
         eventData["errorDescription"] = "bad parameter passed to logEvent in Geordi Client";
         eventData["type"] = "error";
       }
-      if (!"data" in eventData) {
+      if (eventData["data"] == null) {
         eventData["data"] = {};
       }
       if ((!"userID" in eventData) || eventData["userID"] === this.UserStringGetter.ANONYMOUS || eventData["userID"] === this.UserStringGetter.UNAVAILABLE) {
@@ -230,7 +230,7 @@
               eventData["userID"] = _this.UserStringGetter.UNAVAILABLE;
             }
             if ((_this.experimentServerClient == null) || _this.experimentServerClient.ACTIVE_EXPERIMENT === null || (_this.experimentServerClient.currentCohort != null) || _this.experimentServerClient.experimentCompleted) {
-              if (!"data" in eventData) {
+              if (eventData["data"] == null) {
                 eventData["data"] = {};
               }
               eventData["data"]["loggingWithoutExternalRequest"] = true;
@@ -245,7 +245,7 @@
               return _this.logToGoogle(eventData);
             } else {
               if (!_this.gettingCohort) {
-                if (!"data" in eventData) {
+                if (eventData["data"] == null) {
                   eventData["data"] = {};
                 }
                 eventData["data"]["loggingWithoutExternalRequest"] = false;
@@ -257,7 +257,7 @@
                   return _this.gettingCohort = false;
                 });
               } else {
-                if (!"data" in eventData) {
+                if (eventData["data"] == null) {
                   eventData["data"] = {};
                 }
                 eventData["data"]["loggingWithoutExternalRequest"] = true;
