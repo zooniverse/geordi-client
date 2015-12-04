@@ -220,29 +220,53 @@
         eventData["errorDescription"] = "bad parameter passed to logEvent in Geordi Client";
         eventData["type"] = "error";
       }
-      return this.addUserDetailsToEventData(eventData).always((function(_this) {
-        return function(eventData) {
-          if (eventData["userID"] == null) {
-            eventData["userID"] = _this.UserStringGetter.UNAVAILABLE;
-          }
-          if ((_this.experimentServerClient == null) || _this.experimentServerClient.ACTIVE_EXPERIMENT === null || (_this.experimentServerClient.currentCohort != null) || _this.experimentServerClient.experimentCompleted) {
-            _this.logToGeordi(eventData);
-            return _this.logToGoogle(eventData);
-          } else {
-            if (!_this.gettingCohort) {
-              _this.gettingCohort = true;
-              return _this.addCohortToEventData(eventData).always(function(eventData) {
-                _this.logToGeordi(eventData);
-                _this.logToGoogle(eventData);
-                return _this.gettingCohort = false;
-              });
-            } else {
+      if (!"data" in eventData) {
+        eventData["data"] = {};
+      }
+      if ((!"userID" in eventData) || eventData["userID"] === this.UserStringGetter.ANONYMOUS || eventData["userID"] === this.UserStringGetter.UNAVAILABLE) {
+        return this.addUserDetailsToEventData(eventData).always((function(_this) {
+          return function(eventData) {
+            if (eventData["userID"] == null) {
+              eventData["userID"] = _this.UserStringGetter.UNAVAILABLE;
+            }
+            if ((_this.experimentServerClient == null) || _this.experimentServerClient.ACTIVE_EXPERIMENT === null || (_this.experimentServerClient.currentCohort != null) || _this.experimentServerClient.experimentCompleted) {
+              eventData["data"]["loggingWithoutExternalRequest"] = true;
+              eventData["data"]["experimentServerClientPresence"] = !(_this.experimentServerClient == null);
+              eventData["data"]["experimentDefined"] = !!_this.experimentServerClient.ACTIVE_EXPERIMENT;
+              eventData["data"]["experimentHasCurrentCohort"] = !(_this.experimentServerClient.currentCohort == null);
+              if (eventData["data"]["experimentHasCurrentCohort"]) {
+                eventData["data"]["experimentCurrentCohort"] = _this.experimentServerClient.currentCohort;
+              }
+              eventData["data"]["experimentMarkedComplete"] = !!_this.experimentServerClient.experimentCompleted;
               _this.logToGeordi(eventData);
               return _this.logToGoogle(eventData);
+            } else {
+              if (!_this.gettingCohort) {
+                eventData["data"]["loggingWithoutExternalRequest"] = false;
+                eventData["data"]["cohortRequestAlreadyInProgress"] = true;
+                _this.gettingCohort = true;
+                return _this.addCohortToEventData(eventData).always(function(eventData) {
+                  _this.logToGeordi(eventData);
+                  _this.logToGoogle(eventData);
+                  return _this.gettingCohort = false;
+                });
+              } else {
+                eventData["data"]["loggingWithoutExternalRequest"] = true;
+                eventData["data"]["cohortRequestAlreadyInProgress"] = false;
+                _this.logToGeordi(eventData);
+                return _this.logToGoogle(eventData);
+              }
             }
-          }
-        };
-      })(this));
+          };
+        })(this));
+      } else {
+        if (!("userID" in eventData)) {
+          eventData["data"]["missingUserID"] = true;
+          eventData["userID"] = this.UserStringGetter.UNAVAILABLE;
+        }
+        this.logToGeordi(eventData);
+        return this.logToGoogle(eventData);
+      }
     };
 
     return GeordiClient;

@@ -150,21 +150,41 @@ module.exports = class GeordiClient
       eventData["errorCode"] = "GCP03"
       eventData["errorDescription"] = "bad parameter passed to logEvent in Geordi Client"
       eventData["type"] = "error"
-    @addUserDetailsToEventData(eventData)
-    .always (eventData) =>
-      if not eventData["userID"]?
-        eventData["userID"]=@UserStringGetter.UNAVAILABLE
-      if (not @experimentServerClient?) or @experimentServerClient.ACTIVE_EXPERIMENT==null or @experimentServerClient.currentCohort? or @experimentServerClient.experimentCompleted
-        @logToGeordi eventData
-        @logToGoogle eventData
-      else
-        if !@gettingCohort
-          @gettingCohort = true
-          @addCohortToEventData(eventData)
-          .always (eventData) =>
-            @logToGeordi eventData
-            @logToGoogle eventData
-            @gettingCohort = false
-        else
+    if not "data" of eventData
+      eventData["data"]={}
+    if (not "userID" of eventData) || eventData["userID"]==@UserStringGetter.ANONYMOUS || eventData["userID"]==@UserStringGetter.UNAVAILABLE
+      @addUserDetailsToEventData(eventData)
+      .always (eventData) =>
+        if not eventData["userID"]?
+          eventData["userID"]=@UserStringGetter.UNAVAILABLE
+        if (not @experimentServerClient?) || @experimentServerClient.ACTIVE_EXPERIMENT==null || @experimentServerClient.currentCohort? || @experimentServerClient.experimentCompleted
+          eventData["data"]["loggingWithoutExternalRequest"]=true
+          eventData["data"]["experimentServerClientPresence"]=!!@experimentServerClient?
+          eventData["data"]["experimentDefined"]=!!@experimentServerClient.ACTIVE_EXPERIMENT
+          eventData["data"]["experimentHasCurrentCohort"]=!!@experimentServerClient.currentCohort?
+          if eventData["data"]["experimentHasCurrentCohort"]
+            eventData["data"]["experimentCurrentCohort"]=@experimentServerClient.currentCohort
+          eventData["data"]["experimentMarkedComplete"]=!!@experimentServerClient.experimentCompleted
           @logToGeordi eventData
           @logToGoogle eventData
+        else
+          if !@gettingCohort
+            eventData["data"]["loggingWithoutExternalRequest"]=false
+            eventData["data"]["cohortRequestAlreadyInProgress"]=true
+            @gettingCohort = true
+            @addCohortToEventData(eventData)
+            .always (eventData) =>
+              @logToGeordi eventData
+              @logToGoogle eventData
+              @gettingCohort = false
+          else
+            eventData["data"]["loggingWithoutExternalRequest"]=true
+            eventData["data"]["cohortRequestAlreadyInProgress"]=false
+            @logToGeordi eventData
+            @logToGoogle eventData
+    else
+      if "userID" not of eventData
+        eventData["data"]["missingUserID"]=true
+        eventData["userID"]=@UserStringGetter.UNAVAILABLE
+      @logToGeordi eventData
+      @logToGoogle eventData
