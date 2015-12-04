@@ -230,6 +230,9 @@
               eventData["userID"] = _this.UserStringGetter.UNAVAILABLE;
             }
             if ((_this.experimentServerClient == null) || _this.experimentServerClient.ACTIVE_EXPERIMENT === null || (_this.experimentServerClient.currentCohort != null) || _this.experimentServerClient.experimentCompleted) {
+              if (!"data" in eventData) {
+                eventData["data"] = {};
+              }
               eventData["data"]["loggingWithoutExternalRequest"] = true;
               eventData["data"]["experimentServerClientPresence"] = !(_this.experimentServerClient == null);
               eventData["data"]["experimentDefined"] = !!_this.experimentServerClient.ACTIVE_EXPERIMENT;
@@ -242,6 +245,9 @@
               return _this.logToGoogle(eventData);
             } else {
               if (!_this.gettingCohort) {
+                if (!"data" in eventData) {
+                  eventData["data"] = {};
+                }
                 eventData["data"]["loggingWithoutExternalRequest"] = false;
                 eventData["data"]["cohortRequestAlreadyInProgress"] = true;
                 _this.gettingCohort = true;
@@ -251,6 +257,9 @@
                   return _this.gettingCohort = false;
                 });
               } else {
+                if (!"data" in eventData) {
+                  eventData["data"] = {};
+                }
                 eventData["data"]["loggingWithoutExternalRequest"] = true;
                 eventData["data"]["cohortRequestAlreadyInProgress"] = false;
                 _this.logToGeordi(eventData);

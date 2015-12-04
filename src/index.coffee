@@ -158,6 +158,8 @@ module.exports = class GeordiClient
         if not eventData["userID"]?
           eventData["userID"]=@UserStringGetter.UNAVAILABLE
         if (not @experimentServerClient?) || @experimentServerClient.ACTIVE_EXPERIMENT==null || @experimentServerClient.currentCohort? || @experimentServerClient.experimentCompleted
+          if not "data" of eventData
+            eventData["data"] = {}
           eventData["data"]["loggingWithoutExternalRequest"]=true
           eventData["data"]["experimentServerClientPresence"]=!!@experimentServerClient?
           eventData["data"]["experimentDefined"]=!!@experimentServerClient.ACTIVE_EXPERIMENT
@@ -169,6 +171,8 @@ module.exports = class GeordiClient
           @logToGoogle eventData
         else
           if !@gettingCohort
+            if not "data" of eventData
+              eventData["data"] = {}
             eventData["data"]["loggingWithoutExternalRequest"]=false
             eventData["data"]["cohortRequestAlreadyInProgress"]=true
             @gettingCohort = true
@@ -178,6 +182,8 @@ module.exports = class GeordiClient
               @logToGoogle eventData
               @gettingCohort = false
           else
+            if not "data" of eventData
+              eventData["data"] = {}
             eventData["data"]["loggingWithoutExternalRequest"]=true
             eventData["data"]["cohortRequestAlreadyInProgress"]=false
             @logToGeordi eventData
