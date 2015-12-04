@@ -185,15 +185,18 @@
         }
       }
       if ("data" in parameterObject && typeof parameterObject["data"] === "object") {
-        newData = JSON.stringify(parameterObject["data"]);
+        newData = parameterObject["data"];
         if (eventData["data"] != null) {
           for (k in newData) {
             v = newData[k];
+            console.log("adding to data key " + k + " val " + v);
             eventData["data"][k] = v;
-            eventData["data"] = JSON.stringify(eventData["data"]);
           }
         } else {
-          eventData["data"] = JSON.stringify(newData);
+          eventData["data"] = newData;
+        }
+        if (typeof eventData["data"] === "object") {
+          eventData["data"] === JSON.stringify(eventData["data"]);
         }
       }
       if ("browserTime" in parameterObject && typeof parameterObject["browserTime"] === "number" && parameterObject["browserTime"] > 1441062000000) {
@@ -230,7 +233,7 @@
         eventData["type"] = "error";
       }
       if (eventData["data"] == null) {
-        eventData["data"] = {};
+        eventData["data"] = JSON.stringify({});
       }
       if ((!"userID" in eventData) || eventData["userID"] === this.UserStringGetter.ANONYMOUS || eventData["userID"] === this.UserStringGetter.UNAVAILABLE) {
         return this.addUserDetailsToEventData(eventData).always((function(_this) {
@@ -239,9 +242,7 @@
               eventData["userID"] = _this.UserStringGetter.UNAVAILABLE;
             }
             if ((_this.experimentServerClient == null) || _this.experimentServerClient.ACTIVE_EXPERIMENT === null || (_this.experimentServerClient.currentCohort != null) || _this.experimentServerClient.experimentCompleted) {
-              if (eventData["data"] == null) {
-                eventData["data"] = {};
-              }
+              eventData["data"] = JSON.parse(eventData["data"]);
               eventData["data"]["loggingWithoutExternalRequest"] = true;
               eventData["data"]["experimentServerClientPresence"] = !(_this.experimentServerClient == null);
               eventData["data"]["experimentDefined"] = !!_this.experimentServerClient.ACTIVE_EXPERIMENT;
@@ -250,15 +251,15 @@
                 eventData["data"]["experimentCurrentCohort"] = _this.experimentServerClient.currentCohort;
               }
               eventData["data"]["experimentMarkedComplete"] = !!_this.experimentServerClient.experimentCompleted;
+              eventData["data"] = JSON.stringify(eventData["data"]);
               _this.logToGeordi(eventData);
               return _this.logToGoogle(eventData);
             } else {
               if (!_this.gettingCohort) {
-                if (eventData["data"] == null) {
-                  eventData["data"] = {};
-                }
+                eventData["data"] = JSON.parse(eventData["data"]);
                 eventData["data"]["loggingWithoutExternalRequest"] = false;
                 eventData["data"]["cohortRequestAlreadyInProgress"] = true;
+                eventData["data"] = JSON.stringify(eventData["data"]);
                 _this.gettingCohort = true;
                 return _this.addCohortToEventData(eventData).always(function(eventData) {
                   _this.logToGeordi(eventData);
@@ -266,11 +267,10 @@
                   return _this.gettingCohort = false;
                 });
               } else {
-                if (eventData["data"] == null) {
-                  eventData["data"] = {};
-                }
+                eventData["data"] = JSON.parse(eventData["data"]);
                 eventData["data"]["loggingWithoutExternalRequest"] = true;
                 eventData["data"]["cohortRequestAlreadyInProgress"] = false;
+                eventData["data"] = JSON.stringify(eventData["data"]);
                 _this.logToGeordi(eventData);
                 return _this.logToGoogle(eventData);
               }
@@ -279,7 +279,9 @@
         })(this));
       } else {
         if (!("userID" in eventData)) {
+          eventData["data"] = JSON.parse(eventData["data"]);
           eventData["data"]["missingUserID"] = true;
+          eventData["data"] = JSON.stringify(eventData["data"]);
           eventData["userID"] = this.UserStringGetter.UNAVAILABLE;
         }
         this.logToGeordi(eventData);
