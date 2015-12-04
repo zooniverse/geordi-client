@@ -122,7 +122,12 @@ module.exports = class GeordiClient
       if field of parameterObject and typeof(parameterObject[field])=="string" and parameterObject[field].length>0
         eventData[field] = parameterObject[field]
     if "data" of parameterObject and typeof(parameterObject["data"])=="object"
-      eventData["data"]=JSON.stringify(parameterObject["data"])
+      newData=JSON.stringify(parameterObject["data"])
+      if eventData["data"]?
+        for k, v of newData
+          eventData["data"][k]=v
+      else
+        eventData["data"]=newData
     if "browserTime" of parameterObject and typeof(parameterObject["browserTime"])=="number" and parameterObject["browserTime"]>1441062000000 # Sep 1, 2015
       eventData["browserTime"]=parameterObject["browserTime"]
     eventData

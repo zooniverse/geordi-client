@@ -173,7 +173,7 @@
     };
 
     GeordiClient.prototype.updateEventDataFromParameterObject = function(parameterObject, eventData) {
-      var field, i, len, ref;
+      var field, i, k, len, newData, ref, v;
       if (eventData == null) {
         eventData = {};
       }
@@ -185,7 +185,15 @@
         }
       }
       if ("data" in parameterObject && typeof parameterObject["data"] === "object") {
-        eventData["data"] = JSON.stringify(parameterObject["data"]);
+        newData = JSON.stringify(parameterObject["data"]);
+        if (eventData["data"] != null) {
+          for (k in newData) {
+            v = newData[k];
+            eventData["data"][k] = v;
+          }
+        } else {
+          eventData["data"] = newData;
+        }
       }
       if ("browserTime" in parameterObject && typeof parameterObject["browserTime"] === "number" && parameterObject["browserTime"] > 1441062000000) {
         eventData["browserTime"] = parameterObject["browserTime"];
