@@ -190,9 +190,10 @@
           for (k in newData) {
             v = newData[k];
             eventData["data"][k] = v;
+            eventData["data"] = JSON.stringify(eventData["data"]);
           }
         } else {
-          eventData["data"] = newData;
+          eventData["data"] = JSON.stringify(newData);
         }
       }
       if ("browserTime" in parameterObject && typeof parameterObject["browserTime"] === "number" && parameterObject["browserTime"] > 1441062000000) {
