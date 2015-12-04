@@ -184,9 +184,16 @@
           eventData[field] = parameterObject[field];
         }
       }
-      if ("data" in parameterObject && typeof parameterObject["data"] === "object") {
-        newData = parameterObject["data"];
+      if ("data" in parameterObject) {
+        if (typeof parameterObject["data"] === "object") {
+          newData = parameterObject["data"];
+        } else if (typeof parameterObject["data"] === "string") {
+          newData = JSON.parse(parameterObject["data"]);
+        }
         if (eventData["data"] != null) {
+          if (typeof eventData["data"] === "string") {
+            eventData["data"] = JSON.parse(eventData["data"]);
+          }
           for (k in newData) {
             v = newData[k];
             console.log("adding to data key " + k + " val " + v);
@@ -242,7 +249,9 @@
               eventData["userID"] = _this.UserStringGetter.UNAVAILABLE;
             }
             if ((_this.experimentServerClient == null) || _this.experimentServerClient.ACTIVE_EXPERIMENT === null || (_this.experimentServerClient.currentCohort != null) || _this.experimentServerClient.experimentCompleted) {
-              eventData["data"] = JSON.parse(eventData["data"]);
+              if (typeof eventData["data"] === "string") {
+                eventData["data"] = JSON.parse(eventData["data"]);
+              }
               eventData["data"]["loggingWithoutExternalRequest"] = true;
               eventData["data"]["experimentServerClientPresence"] = !(_this.experimentServerClient == null);
               eventData["data"]["experimentDefined"] = !!_this.experimentServerClient.ACTIVE_EXPERIMENT;
@@ -251,15 +260,21 @@
                 eventData["data"]["experimentCurrentCohort"] = _this.experimentServerClient.currentCohort;
               }
               eventData["data"]["experimentMarkedComplete"] = !!_this.experimentServerClient.experimentCompleted;
-              eventData["data"] = JSON.stringify(eventData["data"]);
+              if (typeof eventData["data"] === "object") {
+                eventData["data"] = JSON.stringify(eventData["data"]);
+              }
               _this.logToGeordi(eventData);
               return _this.logToGoogle(eventData);
             } else {
               if (!_this.gettingCohort) {
-                eventData["data"] = JSON.parse(eventData["data"]);
+                if (typeof eventData["data"] === "string") {
+                  eventData["data"] = JSON.parse(eventData["data"]);
+                }
                 eventData["data"]["loggingWithoutExternalRequest"] = false;
                 eventData["data"]["cohortRequestAlreadyInProgress"] = true;
-                eventData["data"] = JSON.stringify(eventData["data"]);
+                if (typeof eventData["data"] === "object") {
+                  eventData["data"] = JSON.stringify(eventData["data"]);
+                }
                 _this.gettingCohort = true;
                 return _this.addCohortToEventData(eventData).always(function(eventData) {
                   _this.logToGeordi(eventData);
@@ -267,10 +282,14 @@
                   return _this.gettingCohort = false;
                 });
               } else {
-                eventData["data"] = JSON.parse(eventData["data"]);
+                if (typeof eventData["data"] === "string") {
+                  eventData["data"] = JSON.parse(eventData["data"]);
+                }
                 eventData["data"]["loggingWithoutExternalRequest"] = true;
                 eventData["data"]["cohortRequestAlreadyInProgress"] = false;
-                eventData["data"] = JSON.stringify(eventData["data"]);
+                if (typeof eventData["data"] === "object") {
+                  eventData["data"] = JSON.stringify(eventData["data"]);
+                }
                 _this.logToGeordi(eventData);
                 return _this.logToGoogle(eventData);
               }

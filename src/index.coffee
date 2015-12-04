@@ -121,9 +121,14 @@ module.exports = class GeordiClient
     for field in ["userID","subjectID","relatedID","errorCode","errorDescription","projectToken","serverURL","experiment","cohort","type"]
       if field of parameterObject and typeof(parameterObject[field])=="string" and parameterObject[field].length>0
         eventData[field] = parameterObject[field]
-    if "data" of parameterObject and typeof(parameterObject["data"])=="object"
-      newData=parameterObject["data"]
+    if "data" of parameterObject
+      if typeof(parameterObject["data"])=="object"
+        newData=parameterObject["data"]
+      else if typeof(parameterObject["data"])=="string"
+        newData=JSON.parse(parameterObject["data"])
       if eventData["data"]?
+        if typeof(eventData["data"])=="string"
+          eventData["data"]=JSON.parse(eventData["data"])
         for k, v of newData
           console.log "adding to data key " + k + " val " + v
           eventData["data"][k]=v
@@ -166,7 +171,8 @@ module.exports = class GeordiClient
         if not eventData["userID"]?
           eventData["userID"]=@UserStringGetter.UNAVAILABLE
         if (not @experimentServerClient?) || @experimentServerClient.ACTIVE_EXPERIMENT==null || @experimentServerClient.currentCohort? || @experimentServerClient.experimentCompleted
-          eventData["data"]=JSON.parse(eventData["data"])
+          if typeof(eventData["data"])=="string"
+            eventData["data"]=JSON.parse(eventData["data"])
           eventData["data"]["loggingWithoutExternalRequest"]=true
           eventData["data"]["experimentServerClientPresence"]=!!@experimentServerClient?
           eventData["data"]["experimentDefined"]=!!@experimentServerClient.ACTIVE_EXPERIMENT
@@ -174,15 +180,18 @@ module.exports = class GeordiClient
           if eventData["data"]["experimentHasCurrentCohort"]
             eventData["data"]["experimentCurrentCohort"]=@experimentServerClient.currentCohort
           eventData["data"]["experimentMarkedComplete"]=!!@experimentServerClient.experimentCompleted
-          eventData["data"]=JSON.stringify(eventData["data"])
+          if typeof(eventData["data"])=="object"
+            eventData["data"]=JSON.stringify(eventData["data"])
           @logToGeordi eventData
           @logToGoogle eventData
         else
           if !@gettingCohort
-            eventData["data"]=JSON.parse(eventData["data"])
+            if typeof(eventData["data"])=="string"
+              eventData["data"]=JSON.parse(eventData["data"])
             eventData["data"]["loggingWithoutExternalRequest"]=false
             eventData["data"]["cohortRequestAlreadyInProgress"]=true
-            eventData["data"]=JSON.stringify(eventData["data"])
+            if typeof(eventData["data"])=="object"
+              eventData["data"]=JSON.stringify(eventData["data"])
             @gettingCohort = true
             @addCohortToEventData(eventData)
             .always (eventData) =>
@@ -190,10 +199,12 @@ module.exports = class GeordiClient
               @logToGoogle eventData
               @gettingCohort = false
           else
-            eventData["data"]=JSON.parse(eventData["data"])
+            if typeof(eventData["data"])=="string"
+              eventData["data"]=JSON.parse(eventData["data"])
             eventData["data"]["loggingWithoutExternalRequest"]=true
             eventData["data"]["cohortRequestAlreadyInProgress"]=false
-            eventData["data"]=JSON.stringify(eventData["data"])
+            if typeof(eventData["data"])=="object"
+              eventData["data"]=JSON.stringify(eventData["data"])
             @logToGeordi eventData
             @logToGoogle eventData
     else
