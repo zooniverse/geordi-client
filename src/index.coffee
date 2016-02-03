@@ -12,11 +12,16 @@ module.exports = class GeordiClient
   defaultSubjectGetter: ->
     "(unknown)"
 
+  defaultSubjectGetterParameter: ->
+    "(unknown)"
+
   defaultLastKnownCohortGetter: ->
     null
 
   defaultZooUserIDGetter: ->
     null
+
+  defaultZooUserIDGetterParameter: null
 
   defaultProjectToken: "unspecified"
 
@@ -27,16 +32,20 @@ module.exports = class GeordiClient
     config["server"] = "staging" if not "server" of config
     config["projectToken"] = @defaultProjectToken if (not "projectToken" of config) or (not config["projectToken"] instanceof String) or (not config["projectToken"].length>0)
     config["zooUserIDGetter"] = @defaultZooUserIDGetter if (not "zooUserIDGetter" of config) or (not config["zooUserIDGetter"] instanceof Function)
+    config["zooUserIDGetterParameter"] = @defaultZooUserIDGetterParameter if (not "zooUserIDGetterParameter" of config)
     config["subjectGetter"] = @defaultSubjectGetter if (not "subjectGetter" of config) or (not config["subjectGetter"] instanceof Function)
+    config["subjectGetterParameter"] = @defaultSubjectGetterParameter if (not "subjectGetterParameter" of config)
     if config["server"] == "production"
       @GEORDI_SERVER_URL = @GEORDI_PRODUCTION_SERVER_URL
     else
       @GEORDI_SERVER_URL = @GEORDI_STAGING_SERVER_URL
     @experimentServerClient = config["experimentServerClient"] if "experimentServerClient" of config
     @getCurrentSubject = config["subjectGetter"]
+    @getCurrentSubjectParameter = config["subjectGetterParameter"]
     @getCurrentUserID = config["zooUserIDGetter"]
+    @getCurrentUserIDParameter = config["zooUserIDGetterParameter"]
     @projectToken = config["projectToken"]
-    @UserStringGetter = new ZooUserStringGetter(@getCurrentUserID)
+    @UserStringGetter = new ZooUserStringGetter(@getCurrentUserID,@getCurrentUserIDParameter)
 
   ###
   log event with Google Analytics
@@ -64,24 +73,16 @@ module.exports = class GeordiClient
     }
 
   ###
-  add the user's details to the event data - but only use IP getting service if we don't currently have a way to identify the user
+  add the user's details to the event data
   ###
   addUserDetailsToEventData: (eventData) =>
     eventualEventData = new $.Deferred
-    if @UserStringGetter.currentUserID==@UserStringGetter.ANONYMOUS || @UserStringGetter.currentUserID==@UserStringGetter.UNAVAILABLE
-      @UserStringGetter.getUserIDorIPAddress()
+    if @UserStringGetter.currentUserID==@UserStringGetter.ANONYMOUS
+      @UserStringGetter.getUserID()
       .then (data) =>
         if data?
-          console.log "getUserID etc from String getter got an ID of "
-          console.log data
           if data!=@UserStringGetter.currentUserID
-            console.log " which is now being set as current user ID"
             @UserStringGetter.currentUserID = data
-          else
-            console.log " but no need to set it as it already has that value"
-      .fail =>
-        console.log "attempt to get userID etc from string getter failed, setting current user id to "+@UserStringGetter.UNAVAILABLE
-        @UserStringGetter.currentUserID = @UserStringGetter.UNAVAILABLE
       .always =>
         eventData['userID'] = @UserStringGetter.currentUserID
         eventualEventData.resolve eventData
@@ -104,7 +105,6 @@ module.exports = class GeordiClient
   buildEventData: (eventData = {}) =>
     eventData['browserTime'] = Date.now()
     eventData['projectToken'] = @projectToken
-    eventData['serverURL'] = location.origin
     eventData['errorCode'] = ""
     eventData['errorDescription'] = ""
     if @experimentServerClient?
@@ -118,24 +118,28 @@ module.exports = class GeordiClient
     eventData
 
   updateEventDataFromParameterObject: (parameterObject, eventData = {}) ->
-    for field in ["userID","subjectID","relatedID","errorCode","errorDescription","projectToken","serverURL","experiment","cohort","type"]
+    # copy all string & numeric data across
+    for field in ["userID","subjectID","relatedID","errorCode","errorDescription","projectToken","serverURL","experiment","cohort","type","userSeq","sessionNumber","eventNumber","userAgent","clientIP"]
       if field of parameterObject and typeof(parameterObject[field])=="string" and parameterObject[field].length>0
         eventData[field] = parameterObject[field]
+    # copy 'data' field across to event data
     if "data" of parameterObject
-      if typeof(parameterObject["data"])=="object"
-        newData=parameterObject["data"]
-      else if typeof(parameterObject["data"])=="string"
+      # ensure it is an object
+      if typeof(parameterObject["data"])=="string"
         newData=JSON.parse(parameterObject["data"])
+      else
+        newData=parameterObject["data"]
+      # merge new data object with existing data object (if not empty)
       if eventData["data"]?
         if typeof(eventData["data"])=="string"
           eventData["data"]=JSON.parse(eventData["data"])
         for k, v of newData
-          console.log "adding to data key " + k + " val " + v
           eventData["data"][k]=v
       else
         eventData["data"]=newData
-      if typeof(eventData["data"])=="object"
-        eventData["data"]==JSON.stringify(eventData["data"])
+      # convert back to string
+      eventData["data"]==JSON.stringify(eventData["data"])
+    # copy browser time across (the only other non-string, non-numeric field)
     if "browserTime" of parameterObject and typeof(parameterObject["browserTime"])=="number" and parameterObject["browserTime"]>1441062000000 # Sep 1, 2015
       eventData["browserTime"]=parameterObject["browserTime"]
     eventData
@@ -160,58 +164,24 @@ module.exports = class GeordiClient
       if not ("subjectID" of eventData and typeof(parameter.subjectID)=="string" and parameter.subjectID.length>0)
         eventData["subjectID"] = @getCurrentSubject()
     else
-      eventData["errorCode"] = "GCP03"
+      eventData["errorCode"] = "GCP02"
       eventData["errorDescription"] = "bad parameter passed to logEvent in Geordi Client"
       eventData["type"] = "error"
-    if not eventData["data"]?
-      eventData["data"]=JSON.stringify({})
-    if (not "userID" of eventData) || eventData["userID"]==@UserStringGetter.ANONYMOUS || eventData["userID"]==@UserStringGetter.UNAVAILABLE
-      @addUserDetailsToEventData(eventData)
-      .always (eventData) =>
-        if not eventData["userID"]?
-          eventData["userID"]=@UserStringGetter.UNAVAILABLE
-        if (not @experimentServerClient?) || @experimentServerClient.ACTIVE_EXPERIMENT==null || @experimentServerClient.currentCohort? || @experimentServerClient.experimentCompleted
-          if typeof(eventData["data"])=="string"
-            eventData["data"]=JSON.parse(eventData["data"])
-          eventData["data"]["loggingWithoutExternalRequest"]=true
-          eventData["data"]["experimentServerClientPresence"]=!!@experimentServerClient?
-          eventData["data"]["experimentDefined"]=!!@experimentServerClient.ACTIVE_EXPERIMENT
-          eventData["data"]["experimentHasCurrentCohort"]=!!@experimentServerClient.currentCohort?
-          if eventData["data"]["experimentHasCurrentCohort"]
-            eventData["data"]["experimentCurrentCohort"]=@experimentServerClient.currentCohort
-          eventData["data"]["experimentMarkedComplete"]=!!@experimentServerClient.experimentCompleted
-          if typeof(eventData["data"])=="object"
-            eventData["data"]=JSON.stringify(eventData["data"])
-          @logToGeordi eventData
-          @logToGoogle eventData
-        else
-          if !@gettingCohort
-            if typeof(eventData["data"])=="string"
-              eventData["data"]=JSON.parse(eventData["data"])
-            eventData["data"]["loggingWithoutExternalRequest"]=false
-            eventData["data"]["cohortRequestAlreadyInProgress"]=true
-            if typeof(eventData["data"])=="object"
-              eventData["data"]=JSON.stringify(eventData["data"])
-            @gettingCohort = true
-            @addCohortToEventData(eventData)
-            .always (eventData) =>
-              @logToGeordi eventData
-              @logToGoogle eventData
-              @gettingCohort = false
-          else
-            if typeof(eventData["data"])=="string"
-              eventData["data"]=JSON.parse(eventData["data"])
-            eventData["data"]["loggingWithoutExternalRequest"]=true
-            eventData["data"]["cohortRequestAlreadyInProgress"]=false
-            if typeof(eventData["data"])=="object"
-              eventData["data"]=JSON.stringify(eventData["data"])
+    @addUserDetailsToEventData(eventData)
+    .always (eventData) =>
+      if not eventData["userID"]?
+        eventData["userID"]=@UserStringGetter.ANONYMOUS
+      if (not @experimentServerClient?) or @experimentServerClient.ACTIVE_EXPERIMENT==null or @experimentServerClient.currentCohort? or @experimentServerClient.experimentCompleted
+        @logToGeordi eventData
+        @logToGoogle eventData
+      else
+        if !@gettingCohort
+          @gettingCohort = true
+          @addCohortToEventData(eventData)
+          .always (eventData) =>
             @logToGeordi eventData
             @logToGoogle eventData
-    else
-      if "userID" not of eventData
-        eventData["data"]=JSON.parse(eventData["data"])
-        eventData["data"]["missingUserID"]=true
-        eventData["data"]=JSON.stringify(eventData["data"])
-        eventData["userID"]=@UserStringGetter.UNAVAILABLE
-      @logToGeordi eventData
-      @logToGoogle eventData
+            @gettingCohort = false
+        else
+          @logToGeordi eventData
+          @logToGoogle eventData
