@@ -16,6 +16,10 @@
       return "(unknown)";
     };
 
+    GeordiClient.prototype.defaultSubjectGetterParameter = function() {
+      return "(unknown)";
+    };
+
     GeordiClient.prototype.defaultLastKnownCohortGetter = function() {
       return null;
     };
@@ -23,6 +27,8 @@
     GeordiClient.prototype.defaultZooUserIDGetter = function() {
       return null;
     };
+
+    GeordiClient.prototype.defaultZooUserIDGetterParameter = null;
 
     GeordiClient.prototype.defaultProjectToken = "unspecified";
 
@@ -45,8 +51,14 @@
       if ((!"zooUserIDGetter" in config) || (!config["zooUserIDGetter"] instanceof Function)) {
         config["zooUserIDGetter"] = this.defaultZooUserIDGetter;
       }
+      if (!"zooUserIDGetterParameter" in config) {
+        config["zooUserIDGetterParameter"] = this.defaultZooUserIDGetterParameter;
+      }
       if ((!"subjectGetter" in config) || (!config["subjectGetter"] instanceof Function)) {
         config["subjectGetter"] = this.defaultSubjectGetter;
+      }
+      if (!"subjectGetterParameter" in config) {
+        config["subjectGetterParameter"] = this.defaultSubjectGetterParameter;
       }
       if (config["server"] === "production") {
         this.GEORDI_SERVER_URL = this.GEORDI_PRODUCTION_SERVER_URL;
@@ -57,9 +69,11 @@
         this.experimentServerClient = config["experimentServerClient"];
       }
       this.getCurrentSubject = config["subjectGetter"];
+      this.getCurrentSubjectParameter = config["subjectGetterParameter"];
       this.getCurrentUserID = config["zooUserIDGetter"];
+      this.getCurrentUserIDParameter = config["zooUserIDGetterParameter"];
       this.projectToken = config["projectToken"];
-      this.UserStringGetter = new ZooUserStringGetter(this.getCurrentUserID);
+      this.UserStringGetter = new ZooUserStringGetter(this.getCurrentUserID, this.getCurrentUserIDParameter);
     }
 
 
@@ -95,30 +109,20 @@
 
 
     /*
-    add the user's details to the event data - but only use IP getting service if we don't currently have a way to identify the user
+    add the user's details to the event data
      */
 
     GeordiClient.prototype.addUserDetailsToEventData = function(eventData) {
       var eventualEventData;
       eventualEventData = new $.Deferred;
-      if (this.UserStringGetter.currentUserID === this.UserStringGetter.ANONYMOUS || this.UserStringGetter.currentUserID === this.UserStringGetter.UNAVAILABLE) {
-        this.UserStringGetter.getUserIDorIPAddress().then((function(_this) {
+      if (this.UserStringGetter.currentUserID === this.UserStringGetter.ANONYMOUS) {
+        this.UserStringGetter.getUserID().then((function(_this) {
           return function(data) {
             if (data != null) {
-              console.log("getUserID etc from String getter got an ID of ");
-              console.log(data);
               if (data !== _this.UserStringGetter.currentUserID) {
-                console.log(" which is now being set as current user ID");
                 return _this.UserStringGetter.currentUserID = data;
-              } else {
-                return console.log(" but no need to set it as it already has that value");
               }
             }
-          };
-        })(this)).fail((function(_this) {
-          return function() {
-            console.log("attempt to get userID etc from string getter failed, setting current user id to " + _this.UserStringGetter.UNAVAILABLE);
-            return _this.UserStringGetter.currentUserID = _this.UserStringGetter.UNAVAILABLE;
           };
         })(this)).always((function(_this) {
           return function() {
@@ -155,7 +159,6 @@
       }
       eventData['browserTime'] = Date.now();
       eventData['projectToken'] = this.projectToken;
-      eventData['serverURL'] = location.origin;
       eventData['errorCode'] = "";
       eventData['errorDescription'] = "";
       if (this.experimentServerClient != null) {
@@ -177,7 +180,7 @@
       if (eventData == null) {
         eventData = {};
       }
-      ref = ["userID", "subjectID", "relatedID", "errorCode", "errorDescription", "projectToken", "serverURL", "experiment", "cohort", "type"];
+      ref = ["userID", "subjectID", "relatedID", "errorCode", "errorDescription", "projectToken", "serverURL", "experiment", "cohort", "type", "userSeq", "sessionNumber", "eventNumber", "userAgent", "clientIP"];
       for (i = 0, len = ref.length; i < len; i++) {
         field = ref[i];
         if (field in parameterObject && typeof parameterObject[field] === "string" && parameterObject[field].length > 0) {
@@ -185,10 +188,10 @@
         }
       }
       if ("data" in parameterObject) {
-        if (typeof parameterObject["data"] === "object") {
-          newData = parameterObject["data"];
-        } else if (typeof parameterObject["data"] === "string") {
+        if (typeof parameterObject["data"] === "string") {
           newData = JSON.parse(parameterObject["data"]);
+        } else {
+          newData = parameterObject["data"];
         }
         if (eventData["data"] != null) {
           if (typeof eventData["data"] === "string") {
@@ -196,15 +199,12 @@
           }
           for (k in newData) {
             v = newData[k];
-            console.log("adding to data key " + k + " val " + v);
             eventData["data"][k] = v;
           }
         } else {
           eventData["data"] = newData;
         }
-        if (typeof eventData["data"] === "object") {
-          eventData["data"] === JSON.stringify(eventData["data"]);
-        }
+        eventData["data"] === JSON.stringify(eventData["data"]);
       }
       if ("browserTime" in parameterObject && typeof parameterObject["browserTime"] === "number" && parameterObject["browserTime"] > 1441062000000) {
         eventData["browserTime"] = parameterObject["browserTime"];
@@ -235,77 +235,33 @@
           eventData["subjectID"] = this.getCurrentSubject();
         }
       } else {
-        eventData["errorCode"] = "GCP03";
+        eventData["errorCode"] = "GCP02";
         eventData["errorDescription"] = "bad parameter passed to logEvent in Geordi Client";
         eventData["type"] = "error";
       }
-      if (eventData["data"] == null) {
-        eventData["data"] = JSON.stringify({});
-      }
-      if ((!"userID" in eventData) || eventData["userID"] === this.UserStringGetter.ANONYMOUS || eventData["userID"] === this.UserStringGetter.UNAVAILABLE) {
-        return this.addUserDetailsToEventData(eventData).always((function(_this) {
-          return function(eventData) {
-            if (eventData["userID"] == null) {
-              eventData["userID"] = _this.UserStringGetter.UNAVAILABLE;
-            }
-            if ((_this.experimentServerClient == null) || _this.experimentServerClient.ACTIVE_EXPERIMENT === null || (_this.experimentServerClient.currentCohort != null) || _this.experimentServerClient.experimentCompleted) {
-              if (typeof eventData["data"] === "string") {
-                eventData["data"] = JSON.parse(eventData["data"]);
-              }
-              eventData["data"]["loggingWithoutExternalRequest"] = true;
-              eventData["data"]["experimentServerClientPresence"] = !(_this.experimentServerClient == null);
-              eventData["data"]["experimentDefined"] = !!_this.experimentServerClient.ACTIVE_EXPERIMENT;
-              eventData["data"]["experimentHasCurrentCohort"] = !(_this.experimentServerClient.currentCohort == null);
-              if (eventData["data"]["experimentHasCurrentCohort"]) {
-                eventData["data"]["experimentCurrentCohort"] = _this.experimentServerClient.currentCohort;
-              }
-              eventData["data"]["experimentMarkedComplete"] = !!_this.experimentServerClient.experimentCompleted;
-              if (typeof eventData["data"] === "object") {
-                eventData["data"] = JSON.stringify(eventData["data"]);
-              }
+      return this.addUserDetailsToEventData(eventData).always((function(_this) {
+        return function(eventData) {
+          if (eventData["userID"] == null) {
+            eventData["userID"] = _this.UserStringGetter.ANONYMOUS;
+          }
+          if ((_this.experimentServerClient == null) || _this.experimentServerClient.ACTIVE_EXPERIMENT === null || (_this.experimentServerClient.currentCohort != null) || _this.experimentServerClient.experimentCompleted) {
+            _this.logToGeordi(eventData);
+            return _this.logToGoogle(eventData);
+          } else {
+            if (!_this.gettingCohort) {
+              _this.gettingCohort = true;
+              return _this.addCohortToEventData(eventData).always(function(eventData) {
+                _this.logToGeordi(eventData);
+                _this.logToGoogle(eventData);
+                return _this.gettingCohort = false;
+              });
+            } else {
               _this.logToGeordi(eventData);
               return _this.logToGoogle(eventData);
-            } else {
-              if (!_this.gettingCohort) {
-                if (typeof eventData["data"] === "string") {
-                  eventData["data"] = JSON.parse(eventData["data"]);
-                }
-                eventData["data"]["loggingWithoutExternalRequest"] = false;
-                eventData["data"]["cohortRequestAlreadyInProgress"] = true;
-                if (typeof eventData["data"] === "object") {
-                  eventData["data"] = JSON.stringify(eventData["data"]);
-                }
-                _this.gettingCohort = true;
-                return _this.addCohortToEventData(eventData).always(function(eventData) {
-                  _this.logToGeordi(eventData);
-                  _this.logToGoogle(eventData);
-                  return _this.gettingCohort = false;
-                });
-              } else {
-                if (typeof eventData["data"] === "string") {
-                  eventData["data"] = JSON.parse(eventData["data"]);
-                }
-                eventData["data"]["loggingWithoutExternalRequest"] = true;
-                eventData["data"]["cohortRequestAlreadyInProgress"] = false;
-                if (typeof eventData["data"] === "object") {
-                  eventData["data"] = JSON.stringify(eventData["data"]);
-                }
-                _this.logToGeordi(eventData);
-                return _this.logToGoogle(eventData);
-              }
             }
-          };
-        })(this));
-      } else {
-        if (!("userID" in eventData)) {
-          eventData["data"] = JSON.parse(eventData["data"]);
-          eventData["data"]["missingUserID"] = true;
-          eventData["data"] = JSON.stringify(eventData["data"]);
-          eventData["userID"] = this.UserStringGetter.UNAVAILABLE;
-        }
-        this.logToGeordi(eventData);
-        return this.logToGoogle(eventData);
-      }
+          }
+        };
+      })(this));
     };
 
     return GeordiClient;
