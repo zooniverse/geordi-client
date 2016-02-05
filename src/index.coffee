@@ -10,18 +10,16 @@ module.exports = class GeordiClient
   gettingCohort: false
 
   defaultSubjectGetter: ->
-    "(unknown)"
+    "(N/A)"
 
   defaultSubjectGetterParameter: ->
-    "(unknown)"
+    "(N/A)"
 
   defaultLastKnownCohortGetter: ->
     null
 
   defaultZooUserIDGetter: ->
     null
-
-  defaultZooUserIDGetterParameter: null
 
   defaultProjectToken: "unspecified"
 
@@ -32,7 +30,6 @@ module.exports = class GeordiClient
     config["server"] = "staging" if not "server" of config
     config["projectToken"] = @defaultProjectToken if (not "projectToken" of config) or (not config["projectToken"] instanceof String) or (not config["projectToken"].length>0)
     config["zooUserIDGetter"] = @defaultZooUserIDGetter if (not "zooUserIDGetter" of config) or (not config["zooUserIDGetter"] instanceof Function)
-    config["zooUserIDGetterParameter"] = @defaultZooUserIDGetterParameter if (not "zooUserIDGetterParameter" of config)
     config["subjectGetter"] = @defaultSubjectGetter if (not "subjectGetter" of config) or (not config["subjectGetter"] instanceof Function)
     config["subjectGetterParameter"] = @defaultSubjectGetterParameter if (not "subjectGetterParameter" of config)
     if config["server"] == "production"
