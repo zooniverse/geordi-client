@@ -239,7 +239,7 @@
           if (eventData["userID"] == null) {
             eventData["userID"] = _this.UserStringGetter.ANONYMOUS;
           }
-          if ((_this.experimentServerClient == null) || _this.experimentServerClient.ACTIVE_EXPERIMENT === null || eventData["userID"] === _this.UserStringGetter.ANONYMOUS || (_this.experimentServerClient.currentCohort != null) || _this.experimentServerClient.experimentCompleted) {
+          if ((_this.experimentServerClient == null) || (!_this.experimentServerClient.shouldGetCohort(eventData["userID"]))) {
             _this.logToGeordi(eventData);
             return _this.logToGoogle(eventData);
           } else {

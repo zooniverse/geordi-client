@@ -168,7 +168,7 @@ module.exports = class GeordiClient
     .always (eventData) =>
       if not eventData["userID"]?
         eventData["userID"]=@UserStringGetter.ANONYMOUS
-      if (not @experimentServerClient?) or @experimentServerClient.ACTIVE_EXPERIMENT==null or eventData["userID"]==@UserStringGetter.ANONYMOUS or @experimentServerClient.currentCohort? or @experimentServerClient.experimentCompleted
+      if (!@experimentServerClient?) || (!@experimentServerClient.shouldGetCohort(eventData["userID"]))
         @logToGeordi eventData
         @logToGoogle eventData
       else
