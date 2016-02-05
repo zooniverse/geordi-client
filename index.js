@@ -183,10 +183,10 @@
         }
       }
       if ("data" in parameterObject) {
-        if (typeof parameterObject["data"] === "string") {
-          newData = JSON.parse(parameterObject["data"]);
-        } else {
+        if (typeof parameterObject["data"] === "object") {
           newData = parameterObject["data"];
+        } else if (typeof parameterObject["data"] === "string") {
+          newData = JSON.parse(parameterObject["data"]);
         }
         if (eventData["data"] != null) {
           if (typeof eventData["data"] === "string") {
@@ -199,7 +199,9 @@
         } else {
           eventData["data"] = newData;
         }
-        eventData["data"] === JSON.stringify(eventData["data"]);
+        if (typeof eventData["data"] === "object") {
+          eventData["data"] === JSON.stringify(eventData["data"]);
+        }
       }
       if ("browserTime" in parameterObject && typeof parameterObject["browserTime"] === "number" && parameterObject["browserTime"] > 1441062000000) {
         eventData["browserTime"] = parameterObject["browserTime"];

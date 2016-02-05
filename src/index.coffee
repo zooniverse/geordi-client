@@ -122,10 +122,10 @@ module.exports = class GeordiClient
     # copy 'data' field across to event data
     if "data" of parameterObject
       # ensure it is an object
-      if typeof(parameterObject["data"])=="string"
-        newData=JSON.parse(parameterObject["data"])
-      else
+      if typeof(parameterObject["data"])=="object"
         newData=parameterObject["data"]
+      else if typeof(parameterObject["data"])=="string"
+        newData=JSON.parse(parameterObject["data"])
       # merge new data object with existing data object (if not empty)
       if eventData["data"]?
         if typeof(eventData["data"])=="string"
@@ -135,7 +135,8 @@ module.exports = class GeordiClient
       else
         eventData["data"]=newData
       # convert back to string
-      eventData["data"]==JSON.stringify(eventData["data"])
+      if typeof(eventData["data"])=="object"
+        eventData["data"]==JSON.stringify(eventData["data"])
     # copy browser time across (the only other non-string, non-numeric field)
     if "browserTime" of parameterObject and typeof(parameterObject["browserTime"])=="number" and parameterObject["browserTime"]>1441062000000 # Sep 1, 2015
       eventData["browserTime"]=parameterObject["browserTime"]
