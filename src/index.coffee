@@ -27,6 +27,8 @@ module.exports = class GeordiClient
   getCurrentUserID: @defaultZooUserIDGetter
 
   constructor: (config) ->
+    console.log 'config is '
+    console.dir config
     config["server"] = "staging" if not "server" of config
     config["projectToken"] = @defaultProjectToken if (not "projectToken" of config) or (not config["projectToken"] instanceof String) or (not config["projectToken"].length>0)
     config["zooUserIDGetter"] = @defaultZooUserIDGetter if (not "zooUserIDGetter" of config) or (not config["zooUserIDGetter"] instanceof Function)
@@ -43,6 +45,8 @@ module.exports = class GeordiClient
     @getCurrentUserIDParameter = config["zooUserIDGetterParameter"]
     @projectToken = config["projectToken"]
     @UserStringGetter = new ZooUserStringGetter(@getCurrentUserID,@getCurrentUserIDParameter)
+    console.log 'after constructor, config is '
+    console.dir config
 
   ###
   log event with Google Analytics
@@ -77,6 +81,8 @@ module.exports = class GeordiClient
     if @UserStringGetter.currentUserID==@UserStringGetter.ANONYMOUS
       @UserStringGetter.getUserID()
       .then (data) =>
+        console.log "in addUDToEd, data is "
+        console.dir data
         if data?
           if data!=@UserStringGetter.currentUserID
             @UserStringGetter.currentUserID = data

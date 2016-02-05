@@ -11,7 +11,7 @@ npm install --save zooniverse-geordi-client
 
 This will save the geordi library dependency into your project.
 
-Now, in your `app/index.coffee` file (for hem projects), or your first-loaded JavaScript file otherwise, load and configure Geordi. This example is in CoffeeScript:
+Now, in your `app/geordi-client.coffee` file (for hem projects), or your first-loaded JavaScript file otherwise, load and configure Geordi. This example is in CoffeeScript:
 
 ```
 # import any needed modules
@@ -33,7 +33,9 @@ Geordi = new GeordiClient({
   "server": "staging"
   "projectToken": "serengeti"
   "zooUserIDGetter": checkZooUserID
+  "zooUserIDGetterParameter": null # this line can be omitted if no parameter is required
   "subjectGetter": checkZooSubject
+  "subjectGetterParameter": null # this line can be omitted if no parameter is required
 })
 ```
 If necessary, this can be added into a setup file, as shown in Snapshot Serengeti [here](https://github.com/alexbfree/Serengeti/blob/converting-geordi-to-component/app/lib/geordi_and_experiments_setup.coffee). This linked example also shows how to initialize Geordi when using an experiment server such as the [Zooniverse Experiment Server](https://github.com/zooniverse/ZooniverseExperimentServer) as well. 
@@ -44,7 +46,7 @@ Geordi.logEvent 'classify'
 ```
 This would log an event of `type` `"classify"`.
 
-The `projectToken` will be set as specified in your configuration, the `userID` and `subjectID` will be automatically retrieved using your provided `zooUserIDGetter` and `subjectGetter` respectively, and the `serverURL` and `browserTime` will be set automatically based on the current time and the `location.origin`.
+The `projectToken` will be set as specified in your configuration, the `userID` and `subjectID` will be automatically retrieved using your provided `zooUserIDGetter` and `subjectGetter` respectively, passing the `zooUserIDGetterParameter` and `subjectGetterParameter` respectively, if specified, and the `serverURL`, `clientIP`, `userAgent` and `browserTime` will be set automatically by the server, as well as `userSeq`, `sessionNumber`, and `eventNumber`.
 
 Alternatively, you can pass a parameter object instead of a string, to set multiple parameters at once:
 ```
