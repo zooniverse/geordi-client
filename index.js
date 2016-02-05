@@ -40,8 +40,6 @@
       this.addCohortToEventData = bind(this.addCohortToEventData, this);
       this.addUserDetailsToEventData = bind(this.addUserDetailsToEventData, this);
       this.logToGeordi = bind(this.logToGeordi, this);
-      console.log('config is ');
-      console.dir(config);
       if (!"server" in config) {
         config["server"] = "staging";
       }
@@ -71,8 +69,6 @@
       this.getCurrentUserIDParameter = config["zooUserIDGetterParameter"];
       this.projectToken = config["projectToken"];
       this.UserStringGetter = new ZooUserStringGetter(this.getCurrentUserID, this.getCurrentUserIDParameter);
-      console.log('after constructor, config is ');
-      console.dir(config);
     }
 
 
@@ -114,11 +110,9 @@
     GeordiClient.prototype.addUserDetailsToEventData = function(eventData) {
       var eventualEventData;
       eventualEventData = new $.Deferred;
-      if (this.UserStringGetter.currentUserID === this.UserStringGetter.ANONYMOUS) {
+      if ((!this.UserStringGetter.currentUserID) || this.UserStringGetter.currentUserID === this.UserStringGetter.ANONYMOUS) {
         this.UserStringGetter.getUserID().then((function(_this) {
           return function(data) {
-            console.log("in addUDToEd, data is ");
-            console.dir(data);
             if (data != null) {
               if (data !== _this.UserStringGetter.currentUserID) {
                 return _this.UserStringGetter.currentUserID = data;
