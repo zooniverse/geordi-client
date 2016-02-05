@@ -13,11 +13,11 @@
     GeordiClient.prototype.gettingCohort = false;
 
     GeordiClient.prototype.defaultSubjectGetter = function() {
-      return "(unknown)";
+      return "(N/A)";
     };
 
     GeordiClient.prototype.defaultSubjectGetterParameter = function() {
-      return "(unknown)";
+      return "(N/A)";
     };
 
     GeordiClient.prototype.defaultLastKnownCohortGetter = function() {
@@ -27,8 +27,6 @@
     GeordiClient.prototype.defaultZooUserIDGetter = function() {
       return null;
     };
-
-    GeordiClient.prototype.defaultZooUserIDGetterParameter = null;
 
     GeordiClient.prototype.defaultProjectToken = "unspecified";
 
@@ -50,9 +48,6 @@
       }
       if ((!"zooUserIDGetter" in config) || (!config["zooUserIDGetter"] instanceof Function)) {
         config["zooUserIDGetter"] = this.defaultZooUserIDGetter;
-      }
-      if (!"zooUserIDGetterParameter" in config) {
-        config["zooUserIDGetterParameter"] = this.defaultZooUserIDGetterParameter;
       }
       if ((!"subjectGetter" in config) || (!config["subjectGetter"] instanceof Function)) {
         config["subjectGetter"] = this.defaultSubjectGetter;
