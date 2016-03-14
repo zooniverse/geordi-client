@@ -3,9 +3,9 @@ ZooUserStringGetter = require 'zooniverse-user-string-getter'
 module.exports = class GeordiClient
 
   GEORDI_STAGING_SERVER_URL:
-    'http://geordi.staging.zooniverse.org/api/events/'
+    'https://geordi.staging.zooniverse.org/api/events/'
   GEORDI_PRODUCTION_SERVER_URL:
-    'http://geordi.zooniverse.org/api/events/'
+    'https://geordi.zooniverse.org/api/events/'
 
   gettingCohort: false
 

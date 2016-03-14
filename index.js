@@ -6,9 +6,9 @@
   ZooUserStringGetter = require('zooniverse-user-string-getter');
 
   module.exports = GeordiClient = (function() {
-    GeordiClient.prototype.GEORDI_STAGING_SERVER_URL = 'http://geordi.staging.zooniverse.org/api/events/';
+    GeordiClient.prototype.GEORDI_STAGING_SERVER_URL = 'https://geordi.staging.zooniverse.org/api/events/';
 
-    GeordiClient.prototype.GEORDI_PRODUCTION_SERVER_URL = 'http://geordi.zooniverse.org/api/events/';
+    GeordiClient.prototype.GEORDI_PRODUCTION_SERVER_URL = 'https://geordi.zooniverse.org/api/events/';
 
     GeordiClient.prototype.gettingCohort = false;
 
