@@ -1,9 +1,11 @@
 # geordi-client
 A JavaScript client for the [Geordi](https://github.com/zooniverse/geordi) user analytics capture engine.
 
-This library simplifies the process of posting an event to Geordi.
+This library simplifies the process of posting an event to Geordi. 
 
-To use it in your project, first type:
+It will also log the event to Google Analytics. Google Analytics is useful for analysing the events in bulk. Geordi's database is more useful for tracking individual records. As such if Google Analytics' Google Tag Manager javascript isn't loaded into your application, you will get a warning each time you log with this client.
+
+To use the Geordi client in your project, first type:
 
 ```
 npm install --save zooniverse-geordi-client
