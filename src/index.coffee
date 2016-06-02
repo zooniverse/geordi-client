@@ -3,47 +3,46 @@ ZooUserStringGetter = require 'zooniverse-user-string-getter'
 
 module.exports = class GeordiClient
 
-  GEORDI_STAGING_SERVER_URL:
-    'https://geordi.staging.zooniverse.org/api/events/'
-  GEORDI_PRODUCTION_SERVER_URL:
-    'https://geordi.zooniverse.org/api/events/'
+  GEORDI_SERVER_URL:
+    staging: 'https://geordi.staging.zooniverse.org/api/events/'
+    production: 'https://geordi.zooniverse.org/api/events/'
+  
+  GEORDI_DATABASE_FIELDS: [
+      "userID"
+      "subjectID"
+      "relatedID"
+      "errorCode"
+      "errorDescription"
+      "projectToken"
+      "serverURL"
+      "experiment"
+      "cohort"
+      "type"
+      "userSeq"
+      "sessionNumber"
+      "eventNumber"
+      "userAgent"
+      "clientIP"
+    ]
 
+  # Default config parameters
   gettingCohort: false
-
-  _defaultSubjectGetter: ->
+  env: 'staging'
+  projectToken: 'unspecified' 
+  subjectGetter: () ->
     "(N/A)"
-
-  _defaultSubjectGetterParameter: ->
-    "(N/A)"
-
-  _defaultLastKnownCohortGetter: ->
+  zooUserIDGetter: () ->
     null
+  zooUserIDGetterParameter: null
 
-  _defaultZooUserIDGetter: ->
-    null
-
-  _defaultProjectToken: "unspecified"
-
-  _getCurrentSubject: @_defaultSubjectGetter
-  _getCurrentUserID: @_defaultZooUserIDGetter
-
-  constructor: (config) ->
-    config["server"] = "staging" if not "server" of config
-    config["projectToken"] = @_defaultProjectToken if (not "projectToken" of config) or (not config["projectToken"] instanceof String) or (not config["projectToken"].length>0)
-    config["zooUserIDGetter"] = @_defaultZooUserIDGetter if (not "zooUserIDGetter" of config) or (not config["zooUserIDGetter"] instanceof Function)
-    config["subjectGetter"] = @_defaultSubjectGetter if (not "subjectGetter" of config) or (not config["subjectGetter"] instanceof Function)
-    config["subjectGetterParameter"] = @_defaultSubjectGetterParameter if (not "subjectGetterParameter" of config)
-    if config["server"] == "production"
-      @GEORDI_SERVER_URL = @GEORDI_PRODUCTION_SERVER_URL
-    else
-      @GEORDI_SERVER_URL = @GEORDI_STAGING_SERVER_URL
-    @experimentServerClient = config["experimentServerClient"] if "experimentServerClient" of config
-    @_getCurrentSubject = config["subjectGetter"]
-    @_getCurrentSubjectParameter = config["subjectGetterParameter"]
-    @_getCurrentUserID = config["zooUserIDGetter"]
-    @_getCurrentUserIDParameter = config["zooUserIDGetterParameter"]
-    @_projectToken = config["projectToken"]
-    @UserStringGetter = new ZooUserStringGetter(@_getCurrentUserID,@_getCurrentUserIDParameter)
+  constructor: (config = {}) ->
+    @update config
+    @UserStringGetter = new ZooUserStringGetter @zooUserIDGetter, @zooUserIDGetterParameter
+  
+  update: (config = {}) ->
+    for property, value of config
+      @[property] = value
+      
 
   ###
   log event with Google Analytics
@@ -66,7 +65,7 @@ module.exports = class GeordiClient
   ###
   _logToGeordi: (eventData) ->
     request = new XMLHttpRequest()
-    request.open "POST", @GEORDI_SERVER_URL
+    request.open "POST", @GEORDI_SERVER_URL[@env]
     request.setRequestHeader "Content-Type", "application/json; charset=utf-8"
     request.send JSON.stringify eventData
 
@@ -81,7 +80,7 @@ module.exports = class GeordiClient
           if data?
             if data!=@UserStringGetter.currentUserID
               @UserStringGetter.currentUserID = data
-        .always =>
+        .then () =>
           eventData['userID'] = @UserStringGetter.currentUserID
           resolve eventData
       else
@@ -98,9 +97,9 @@ module.exports = class GeordiClient
       .always ->
         resolve eventData
 
-  _buildEventData: (eventData = {}) =>
+  _buildEventData: (eventData = {}) ->
     eventData['browserTime'] = Date.now()
-    eventData['projectToken'] = @_projectToken
+    eventData['projectToken'] = @projectToken
     eventData['errorCode'] = ""
     eventData['errorDescription'] = ""
     if @experimentServerClient?
@@ -115,8 +114,8 @@ module.exports = class GeordiClient
 
   _updateEventDataFromParameterObject: (parameterObject, eventData = {}) ->
     # copy all string & numeric data across
-    for field in ["userID","subjectID","relatedID","errorCode","errorDescription","projectToken","serverURL","experiment","cohort","type","userSeq","sessionNumber","eventNumber","userAgent","clientIP"]
-      if field of parameterObject and typeof(parameterObject[field])=="string" and parameterObject[field].length>0
+    for field in @GEORDI_DATABASE_FIELDS
+      if parameterObject[field]? and typeof(parameterObject[field])=="string" and parameterObject[field].length>0
         eventData[field] = parameterObject[field]
     # copy 'data' field across to event data
     if "data" of parameterObject
@@ -140,10 +139,6 @@ module.exports = class GeordiClient
       eventData["browserTime"]=parameterObject["browserTime"]
     eventData
 
-  setProjectToken: (projectTitle) ->
-    projectTitle = @_defaultProjectToken if (not projectTitle instanceof String) or (not projectTitle.length>0)
-    @_projectToken = projectTitle
-
   ###
   This will log a user interaction both in the Geordi
   analytics API and in Google Analytics.
@@ -162,13 +157,13 @@ module.exports = class GeordiClient
       else
         eventData = @_updateEventDataFromParameterObject parameter, eventData
       if not ("subjectID" of eventData and typeof(parameter.subjectID)=="string" and parameter.subjectID.length>0)
-        eventData["subjectID"] = @_getCurrentSubject()
+        eventData["subjectID"] = @subjectGetter()
     else
       eventData["errorCode"] = "GCP02"
       eventData["errorDescription"] = "bad parameter passed to logEvent in Geordi Client"
       eventData["type"] = "error"
     @_addUserDetailsToEventData(eventData)
-    .always (eventData) =>
+    .then (eventData) =>
       if not eventData["userID"]?
         eventData["userID"]=@UserStringGetter.ANONYMOUS
       if (!@experimentServerClient?) || (!@experimentServerClient.shouldGetCohort(eventData["userID"]))
@@ -178,7 +173,7 @@ module.exports = class GeordiClient
         if !@gettingCohort
           @gettingCohort = true
           @_addCohortToEventData(eventData)
-          .always (eventData) =>
+          .then (eventData) =>
             @_logToGeordi eventData
             @_logToGoogle eventData
             @gettingCohort = false
