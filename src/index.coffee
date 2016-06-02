@@ -58,7 +58,7 @@ module.exports = class GeordiClient
         classification_id: eventData['relatedID']
       }
     else
-      console.warn "Warning: Google Tag Manager script not found - Geordi is not logging to Google Analytics."
+      throw new Error "Warning: Google Tag Manager script not found - Geordi is not logging to Google Analytics."
 
   ###
   log event with Geordi v2.1
