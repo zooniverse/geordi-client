@@ -143,7 +143,7 @@ module.exports = class GeordiClient
 
   setProjectToken: (projectTitle) ->
     projectTitle = @defaultProjectToken if (not projectTitle instanceof String) or (not projectTitle.length>0)
-    @projectToken = projectTitle
+    @_projectToken = projectTitle
 
   ###
   This will log a user interaction both in the Geordi
