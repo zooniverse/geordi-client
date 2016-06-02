@@ -144,6 +144,10 @@ module.exports = class GeordiClient
       eventData["browserTime"]=parameterObject["browserTime"]
     eventData
 
+  setProjectToken: (projectTitle) ->
+    projectTitle = @_defaultProjectToken if (not projectTitle instanceof String) or (not projectTitle.length>0)
+    @_projectToken = projectTitle
+
   ###
   This will log a user interaction both in the Geordi
   analytics API and in Google Analytics.
