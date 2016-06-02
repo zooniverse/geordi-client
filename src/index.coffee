@@ -142,7 +142,7 @@ module.exports = class GeordiClient
     eventData
 
   setProjectToken: (projectTitle) ->
-    projectTitle = @defaultProjectToken if (not projectTitle instanceof String) or (not projectTitle.length>0)
+    projectTitle = @_defaultProjectToken if (not projectTitle instanceof String) or (not projectTitle.length>0)
     @_projectToken = projectTitle
 
   ###
