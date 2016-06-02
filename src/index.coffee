@@ -1,3 +1,4 @@
+require( 'es6-promise').polyfill()
 ZooUserStringGetter = require 'zooniverse-user-string-getter'
 
 module.exports = class GeordiClient
@@ -63,44 +64,39 @@ module.exports = class GeordiClient
   ###
   log event with Geordi v2.1
   ###
-  _logToGeordi: (eventData) =>
-    $.ajax {
-      url: @GEORDI_SERVER_URL,
-      type: 'POST',
-      contentType: 'application/json; charset=utf-8',
-      data: JSON.stringify(eventData),
-      dataType: 'json'
-    }
+  _logToGeordi: (eventData) ->
+    request = new XMLHttpRequest()
+    request.open "POST", @GEORDI_SERVER_URL
+    request.setRequestHeader "Content-Type", "application/json; charset=utf-8"
+    request.send JSON.stringify eventData
 
   ###
   add the user's details to the event data
   ###
-  _addUserDetailsToEventData: (eventData) =>
-    eventualEventData = new $.Deferred
-    if (!@UserStringGetter.currentUserID)||@UserStringGetter.currentUserID==@UserStringGetter.ANONYMOUS
-      @UserStringGetter.getUserID()
-      .then (data) =>
-        if data?
-          if data!=@UserStringGetter.currentUserID
-            @UserStringGetter.currentUserID = data
-      .always =>
+  _addUserDetailsToEventData: (eventData) ->
+    new Promise (resolve, reject) =>
+      if (!@UserStringGetter.currentUserID) || (@UserStringGetter.currentUserID == @UserStringGetter.ANONYMOUS)
+        @UserStringGetter.getUserID()
+        .then (data) =>
+          if data?
+            if data!=@UserStringGetter.currentUserID
+              @UserStringGetter.currentUserID = data
+        .always =>
+          eventData['userID'] = @UserStringGetter.currentUserID
+          resolve eventData
+      else
         eventData['userID'] = @UserStringGetter.currentUserID
-        eventualEventData.resolve eventData
-    else
-      eventData['userID'] = @UserStringGetter.currentUserID
-      eventualEventData.resolve eventData
-    eventualEventData.promise()
+        resolve eventData
 
-  _addCohortToEventData: (eventData) =>
-    eventualEventData = new $.Deferred
-    @experimentServerClient.getCohort()
-    .then (cohort) =>
-      if cohort?
-        eventData['cohort'] = cohort
-        @experimentServerClient.currentCohort = cohort
-    .always ->
-      eventualEventData.resolve eventData
-    eventualEventData.promise()
+  _addCohortToEventData: (eventData) ->
+    new Promise (resolve, reject) =>
+      @experimentServerClient.getCohort()
+      .then (cohort) =>
+        if cohort?
+          eventData['cohort'] = cohort
+          @experimentServerClient.currentCohort = cohort
+      .always ->
+        resolve eventData
 
   _buildEventData: (eventData = {}) =>
     eventData['browserTime'] = Date.now()
