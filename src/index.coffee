@@ -48,14 +48,17 @@ module.exports = class GeordiClient
   log event with Google Analytics
   ###
   logToGoogle: (eventData) ->
-    dataLayer.push {
-      event: "gaTriggerEvent"
-      project_token: eventData['projectToken']
-      user_id: eventData['userID']
-      subject_id: eventData['subjectID']
-      geordi_event_type: eventData['type']
-      classification_id: eventData['relatedID']
-    }
+    if dataLayer?
+      dataLayer.push {
+        event: "gaTriggerEvent"
+        project_token: eventData['projectToken']
+        user_id: eventData['userID']
+        subject_id: eventData['subjectID']
+        geordi_event_type: eventData['type']
+        classification_id: eventData['relatedID']
+      }
+    else
+      console.warn "Warning: Google Tag Manager script not found - Geordi is not logging to Google Analytics."
 
   ###
   log event with Geordi v2.1
