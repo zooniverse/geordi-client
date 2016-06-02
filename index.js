@@ -12,48 +12,48 @@
 
     GeordiClient.prototype.gettingCohort = false;
 
-    GeordiClient.prototype.defaultSubjectGetter = function() {
+    GeordiClient.prototype._defaultSubjectGetter = function() {
       return "(N/A)";
     };
 
-    GeordiClient.prototype.defaultSubjectGetterParameter = function() {
+    GeordiClient.prototype._defaultSubjectGetterParameter = function() {
       return "(N/A)";
     };
 
-    GeordiClient.prototype.defaultLastKnownCohortGetter = function() {
+    GeordiClient.prototype._defaultLastKnownCohortGetter = function() {
       return null;
     };
 
-    GeordiClient.prototype.defaultZooUserIDGetter = function() {
+    GeordiClient.prototype._defaultZooUserIDGetter = function() {
       return null;
     };
 
-    GeordiClient.prototype.defaultProjectToken = "unspecified";
+    GeordiClient.prototype._defaultProjectToken = "unspecified";
 
-    GeordiClient.prototype.getCurrentSubject = GeordiClient.defaultSubjectGetter;
+    GeordiClient.prototype._getCurrentSubject = GeordiClient._defaultSubjectGetter;
 
-    GeordiClient.prototype.getCurrentUserID = GeordiClient.defaultZooUserIDGetter;
+    GeordiClient.prototype._getCurrentUserID = GeordiClient._defaultZooUserIDGetter;
 
     function GeordiClient(config) {
       this.logEvent = bind(this.logEvent, this);
-      this.buildEventData = bind(this.buildEventData, this);
-      this.addCohortToEventData = bind(this.addCohortToEventData, this);
-      this.addUserDetailsToEventData = bind(this.addUserDetailsToEventData, this);
-      this.logToGeordi = bind(this.logToGeordi, this);
+      this._buildEventData = bind(this._buildEventData, this);
+      this._addCohortToEventData = bind(this._addCohortToEventData, this);
+      this._addUserDetailsToEventData = bind(this._addUserDetailsToEventData, this);
+      this._logToGeordi = bind(this._logToGeordi, this);
       if (!"server" in config) {
         config["server"] = "staging";
       }
       if ((!"projectToken" in config) || (!config["projectToken"] instanceof String) || (!config["projectToken"].length > 0)) {
-        config["projectToken"] = this.defaultProjectToken;
+        config["projectToken"] = this._defaultProjectToken;
       }
       if ((!"zooUserIDGetter" in config) || (!config["zooUserIDGetter"] instanceof Function)) {
-        config["zooUserIDGetter"] = this.defaultZooUserIDGetter;
+        config["zooUserIDGetter"] = this._defaultZooUserIDGetter;
       }
       if ((!"subjectGetter" in config) || (!config["subjectGetter"] instanceof Function)) {
-        config["subjectGetter"] = this.defaultSubjectGetter;
+        config["subjectGetter"] = this._defaultSubjectGetter;
       }
       if (!"subjectGetterParameter" in config) {
-        config["subjectGetterParameter"] = this.defaultSubjectGetterParameter;
+        config["subjectGetterParameter"] = this._defaultSubjectGetterParameter;
       }
       if (config["server"] === "production") {
         this.GEORDI_SERVER_URL = this.GEORDI_PRODUCTION_SERVER_URL;
@@ -63,12 +63,12 @@
       if ("experimentServerClient" in config) {
         this.experimentServerClient = config["experimentServerClient"];
       }
-      this.getCurrentSubject = config["subjectGetter"];
-      this.getCurrentSubjectParameter = config["subjectGetterParameter"];
-      this.getCurrentUserID = config["zooUserIDGetter"];
-      this.getCurrentUserIDParameter = config["zooUserIDGetterParameter"];
-      this.projectToken = config["projectToken"];
-      this.UserStringGetter = new ZooUserStringGetter(this.getCurrentUserID, this.getCurrentUserIDParameter);
+      this._getCurrentSubject = config["subjectGetter"];
+      this._getCurrentSubjectParameter = config["subjectGetterParameter"];
+      this._getCurrentUserID = config["zooUserIDGetter"];
+      this._getCurrentUserIDParameter = config["zooUserIDGetterParameter"];
+      this._projectToken = config["projectToken"];
+      this.UserStringGetter = new ZooUserStringGetter(this._getCurrentUserID, this._getCurrentUserIDParameter);
     }
 
 
@@ -76,15 +76,19 @@
     log event with Google Analytics
      */
 
-    GeordiClient.prototype.logToGoogle = function(eventData) {
-      return dataLayer.push({
-        event: "gaTriggerEvent",
-        project_token: eventData['projectToken'],
-        user_id: eventData['userID'],
-        subject_id: eventData['subjectID'],
-        geordi_event_type: eventData['type'],
-        classification_id: eventData['relatedID']
-      });
+    GeordiClient.prototype._logToGoogle = function(eventData) {
+      if (typeof dataLayer !== "undefined" && dataLayer !== null) {
+        return dataLayer.push({
+          event: "gaTriggerEvent",
+          project_token: eventData['projectToken'],
+          user_id: eventData['userID'],
+          subject_id: eventData['subjectID'],
+          geordi_event_type: eventData['type'],
+          classification_id: eventData['relatedID']
+        });
+      } else {
+        throw new Error("Warning: Google Tag Manager script not found - Geordi is not logging to Google Analytics.");
+      }
     };
 
 
@@ -92,7 +96,7 @@
     log event with Geordi v2.1
      */
 
-    GeordiClient.prototype.logToGeordi = function(eventData) {
+    GeordiClient.prototype._logToGeordi = function(eventData) {
       return $.ajax({
         url: this.GEORDI_SERVER_URL,
         type: 'POST',
@@ -107,7 +111,7 @@
     add the user's details to the event data
      */
 
-    GeordiClient.prototype.addUserDetailsToEventData = function(eventData) {
+    GeordiClient.prototype._addUserDetailsToEventData = function(eventData) {
       var eventualEventData;
       eventualEventData = new $.Deferred;
       if ((!this.UserStringGetter.currentUserID) || this.UserStringGetter.currentUserID === this.UserStringGetter.ANONYMOUS) {
@@ -132,7 +136,7 @@
       return eventualEventData.promise();
     };
 
-    GeordiClient.prototype.addCohortToEventData = function(eventData) {
+    GeordiClient.prototype._addCohortToEventData = function(eventData) {
       var eventualEventData;
       eventualEventData = new $.Deferred;
       this.experimentServerClient.getCohort().then((function(_this) {
@@ -148,12 +152,12 @@
       return eventualEventData.promise();
     };
 
-    GeordiClient.prototype.buildEventData = function(eventData) {
+    GeordiClient.prototype._buildEventData = function(eventData) {
       if (eventData == null) {
         eventData = {};
       }
       eventData['browserTime'] = Date.now();
-      eventData['projectToken'] = this.projectToken;
+      eventData['projectToken'] = this._projectToken;
       eventData['errorCode'] = "";
       eventData['errorDescription'] = "";
       if (this.experimentServerClient != null) {
@@ -170,7 +174,7 @@
       return eventData;
     };
 
-    GeordiClient.prototype.updateEventDataFromParameterObject = function(parameterObject, eventData) {
+    GeordiClient.prototype._updateEventDataFromParameterObject = function(parameterObject, eventData) {
       var field, i, k, len, newData, ref, v;
       if (eventData == null) {
         eventData = {};
@@ -215,7 +219,7 @@
 
     GeordiClient.prototype.logEvent = function(parameter) {
       var eventData;
-      eventData = this.buildEventData();
+      eventData = this._buildEventData();
       if (typeof parameter === "string") {
         eventData["type"] = parameter;
       } else if (typeof parameter === "object") {
@@ -224,35 +228,35 @@
           eventData["errorDescription"] = "missing 'type' when calling logEvent in Geordi client";
           eventData["type"] = "error";
         } else {
-          eventData = this.updateEventDataFromParameterObject(parameter, eventData);
+          eventData = this._updateEventDataFromParameterObject(parameter, eventData);
         }
         if (!("subjectID" in eventData && typeof parameter.subjectID === "string" && parameter.subjectID.length > 0)) {
-          eventData["subjectID"] = this.getCurrentSubject();
+          eventData["subjectID"] = this._getCurrentSubject();
         }
       } else {
         eventData["errorCode"] = "GCP02";
         eventData["errorDescription"] = "bad parameter passed to logEvent in Geordi Client";
         eventData["type"] = "error";
       }
-      return this.addUserDetailsToEventData(eventData).always((function(_this) {
+      return this._addUserDetailsToEventData(eventData).always((function(_this) {
         return function(eventData) {
           if (eventData["userID"] == null) {
             eventData["userID"] = _this.UserStringGetter.ANONYMOUS;
           }
           if ((_this.experimentServerClient == null) || (!_this.experimentServerClient.shouldGetCohort(eventData["userID"]))) {
-            _this.logToGeordi(eventData);
-            return _this.logToGoogle(eventData);
+            _this._logToGeordi(eventData);
+            return _this._logToGoogle(eventData);
           } else {
             if (!_this.gettingCohort) {
               _this.gettingCohort = true;
-              return _this.addCohortToEventData(eventData).always(function(eventData) {
-                _this.logToGeordi(eventData);
-                _this.logToGoogle(eventData);
+              return _this._addCohortToEventData(eventData).always(function(eventData) {
+                _this._logToGeordi(eventData);
+                _this._logToGoogle(eventData);
                 return _this.gettingCohort = false;
               });
             } else {
-              _this.logToGeordi(eventData);
-              return _this.logToGoogle(eventData);
+              _this._logToGeordi(eventData);
+              return _this._logToGoogle(eventData);
             }
           }
         };
