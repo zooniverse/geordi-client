@@ -98,11 +98,12 @@
             return _this.UserStringGetter.getUserID().then(function(data) {
               if (data != null) {
                 if (data !== _this.UserStringGetter.currentUserID) {
-                  return _this.UserStringGetter.currentUserID = data;
+                  _this.UserStringGetter.currentUserID = data;
                 }
               }
-            }).then(function() {
-              eventData['userID'] = _this.UserStringGetter.currentUserID;
+              return _this.UserStringGetter.currentUserID;
+            }).then(function(userID) {
+              eventData['userID'] = userID;
               return resolve(eventData);
             });
           } else {
@@ -121,7 +122,7 @@
               eventData['cohort'] = cohort;
               return _this.experimentServerClient.currentCohort = cohort;
             }
-          }).always(function() {
+          }).then(function() {
             return resolve(eventData);
           });
         };

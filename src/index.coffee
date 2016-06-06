@@ -80,8 +80,9 @@ module.exports = class GeordiClient
           if data?
             if data!=@UserStringGetter.currentUserID
               @UserStringGetter.currentUserID = data
-        .then () =>
-          eventData['userID'] = @UserStringGetter.currentUserID
+          @UserStringGetter.currentUserID
+        .then ( userID ) ->
+          eventData['userID'] = userID
           resolve eventData
       else
         eventData['userID'] = @UserStringGetter.currentUserID
@@ -94,7 +95,7 @@ module.exports = class GeordiClient
         if cohort?
           eventData['cohort'] = cohort
           @experimentServerClient.currentCohort = cohort
-      .always ->
+      .then () ->
         resolve eventData
 
   _buildEventData: (eventData = {}) ->
