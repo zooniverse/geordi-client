@@ -83,7 +83,19 @@
       request = new XMLHttpRequest();
       request.open("POST", this.GEORDI_SERVER_URL[this.env]);
       request.setRequestHeader("Content-Type", "application/json; charset=utf-8");
-      return request.send(JSON.stringify(eventData));
+      return new Promise(function(resolve, reject) {
+        request.onload = function() {
+          if (request.status === 200) {
+            return resolve(request.response);
+          } else {
+            return reject(Error(request.statusText));
+          }
+        };
+        request.onerror = function() {
+          return reject(Error("Network Error"));
+        };
+        return request.send(JSON.stringify(eventData));
+      });
     };
 
 
@@ -217,25 +229,27 @@
       }
       return this._addUserDetailsToEventData(eventData).then((function(_this) {
         return function(eventData) {
+          var promise;
           if (eventData["userID"] == null) {
             eventData["userID"] = _this.UserStringGetter.ANONYMOUS;
           }
           if ((_this.experimentServerClient == null) || (!_this.experimentServerClient.shouldGetCohort(eventData["userID"]))) {
-            _this._logToGeordi(eventData);
-            return _this._logToGoogle(eventData);
+            promise = _this._logToGeordi(eventData);
+            _this._logToGoogle(eventData);
           } else {
             if (!_this.gettingCohort) {
               _this.gettingCohort = true;
-              return _this._addCohortToEventData(eventData).then(function(eventData) {
-                _this._logToGeordi(eventData);
+              _this._addCohortToEventData(eventData).then(function(eventData) {
+                promise = _this._logToGeordi(eventData);
                 _this._logToGoogle(eventData);
                 return _this.gettingCohort = false;
               });
             } else {
-              _this._logToGeordi(eventData);
-              return _this._logToGoogle(eventData);
+              promise = _this._logToGeordi(eventData);
+              _this._logToGoogle(eventData);
             }
           }
+          return promise;
         };
       })(this));
     };

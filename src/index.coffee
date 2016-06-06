@@ -67,7 +67,19 @@ module.exports = class GeordiClient
     request = new XMLHttpRequest()
     request.open "POST", @GEORDI_SERVER_URL[@env]
     request.setRequestHeader "Content-Type", "application/json; charset=utf-8"
-    request.send JSON.stringify eventData
+    
+    new Promise (resolve, reject) ->
+
+      request.onload = () ->
+          if request.status == 200
+            resolve request.response
+          else
+            reject Error request.statusText
+
+      request.onerror = () ->
+          reject Error "Network Error"
+      
+      request.send JSON.stringify eventData
 
   ###
   add the user's details to the event data
@@ -164,20 +176,22 @@ module.exports = class GeordiClient
       eventData["errorDescription"] = "bad parameter passed to logEvent in Geordi Client"
       eventData["type"] = "error"
     @_addUserDetailsToEventData(eventData)
-    .then (eventData) =>
-      if not eventData["userID"]?
-        eventData["userID"]=@UserStringGetter.ANONYMOUS
-      if (!@experimentServerClient?) || (!@experimentServerClient.shouldGetCohort(eventData["userID"]))
-        @_logToGeordi eventData
-        @_logToGoogle eventData
-      else
-        if !@gettingCohort
-          @gettingCohort = true
-          @_addCohortToEventData(eventData)
-          .then (eventData) =>
-            @_logToGeordi eventData
-            @_logToGoogle eventData
-            @gettingCohort = false
-        else
-          @_logToGeordi eventData
+      .then (eventData) =>
+        if not eventData["userID"]?
+          eventData["userID"]=@UserStringGetter.ANONYMOUS
+        if (!@experimentServerClient?) || (!@experimentServerClient.shouldGetCohort(eventData["userID"]))
+          promise = @_logToGeordi eventData
           @_logToGoogle eventData
+        else
+          if !@gettingCohort
+            @gettingCohort = true
+            @_addCohortToEventData(eventData)
+            .then (eventData) =>
+              promise = @_logToGeordi eventData
+              @_logToGoogle eventData
+              @gettingCohort = false
+          else
+            promise = @_logToGeordi eventData
+            @_logToGoogle eventData
+        promise
+    
