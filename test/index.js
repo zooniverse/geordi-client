@@ -21,3 +21,17 @@ test('Log without a valid project token', function(t) {
       t.end()
     });
 });
+test('Log with valid project token', function(t) {
+  var geordi = new GeordiClient({projectToken: 'test/token'});
+  geordi.logEvent('test event')
+    .then(function(response){
+      t.pass('Valid project token will allow logging');
+      t.end()
+    })
+});
+test('Update data on Geordi', function(t) {
+  var geordi = new GeordiClient({projectToken: 'test/token'});
+  geordi.update({projectToken: 'new/token'})
+  t.equal(geordi.projectToken, 'new/token');
+  t.end()
+});
