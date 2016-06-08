@@ -7,18 +7,23 @@ test('Instantiate a client with default settings', function(t) {
   var geordi = new GeordiClient();
   t.equal(geordi.env, 'staging');
   t.equal(geordi.projectToken, 'unspecified');
-  t.end()
+  t.end();
+});
+test('Instantiate a client with older settings', function(t) {
+  var geordi = new GeordiClient({server: 'production'});
+  t.equal(geordi.env, 'production');
+  t.end();
 });
 test('Log without a valid project token', function(t) {
   var geordi = new GeordiClient({projectToken:''});
   geordi.logEvent('test event')
     .then(function(response){
       t.fail('invalid project token should not be logged');
-      t.end()
+      t.end();
     })
     .catch(function(error){
       t.pass(error);
-      t.end()
+      t.end();
     });
 });
 test('Log with valid project token', function(t) {
@@ -26,12 +31,12 @@ test('Log with valid project token', function(t) {
   geordi.logEvent('test event')
     .then(function(response){
       t.pass('Valid project token will allow logging');
-      t.end()
+      t.end();
     })
 });
 test('Update data on Geordi', function(t) {
   var geordi = new GeordiClient({projectToken: 'test/token'});
   geordi.update({projectToken: 'new/token'})
   t.equal(geordi.projectToken, 'new/token');
-  t.end()
+  t.end();
 });
