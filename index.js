@@ -45,6 +45,10 @@
       if (config == null) {
         config = {};
       }
+      if (config.server && this.GEORDI_SERVER_URL[config.server]) {
+        config.env = config.server;
+        delete config.server;
+      }
       results = [];
       for (property in config) {
         value = config[property];

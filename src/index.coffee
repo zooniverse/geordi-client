@@ -40,6 +40,10 @@ module.exports = class GeordiClient
     @UserStringGetter = new ZooUserStringGetter @zooUserIDGetter, @zooUserIDGetterParameter
   
   update: (config = {}) ->
+    if config.server && @GEORDI_SERVER_URL[config.server]
+      config.env = config.server
+      delete config.server
+      
     for property, value of config
       @[property] = value
       
