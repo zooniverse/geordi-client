@@ -29,8 +29,12 @@ test('Log without a valid project token', function(t) {
 test('Log with valid project token', function(t) {
   var geordi = new GeordiClient({projectToken: 'test/token'});
   geordi.logEvent('test event')
-    .then(function(response){
-      t.pass('Valid project token will allow logging');
+    .then(function(data){
+      return JSON.parse(data);
+    })
+    .then(function(event){
+      t.equal(event.projectToken, 'test/token', "correct project token");
+      t.equal(event.type, 'test event', "correct event type");
       t.end();
     })
 });
