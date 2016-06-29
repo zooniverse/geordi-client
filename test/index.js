@@ -14,6 +14,22 @@ test('Instantiate a client with older settings', function(t) {
   t.equal(geordi.env, 'production');
   t.end();
 });
+test('Instantiate a client with unknown host', function(t) {
+  GeordiClient.prototype.GEORDI_SERVER_URL.test = 'https://geordi.staging.zooniverse.org.uk/api/events/';
+  var geordi = new GeordiClient({env: 'test'});
+  var x = 3;
+  geordi.logEvent('test event')
+  .then(function(response){
+    t.fail('invalid environment should not succeed');
+  });
+  x++
+  t.equal(x, 4, 'Code continues after API error');
+  geordi.logEvent('test event')
+  .catch(function(error){
+    t.pass(error);
+    t.end();
+  });
+});
 test('Log without a valid project token', function(t) {
   var geordi = new GeordiClient({projectToken:''});
   geordi.logEvent('test event')
