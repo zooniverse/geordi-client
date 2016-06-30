@@ -14,6 +14,11 @@ test('Instantiate a client with older settings', function(t) {
   t.equal(geordi.env, 'production');
   t.end();
 });
+test('Instantiate a client with an invalid environment', function(t) {
+  var geordi = new GeordiClient({env: 'dev'});
+  t.equal(geordi.env, 'staging', "env is staging");
+  t.end();
+});
 test('Instantiate a client with unknown host', function(t) {
   GeordiClient.prototype.GEORDI_SERVER_URL.test = 'https://geordi.staging.zooniverse.org.uk/api/events/';
   var geordi = new GeordiClient({env: 'test'});

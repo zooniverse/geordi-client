@@ -4,6 +4,7 @@ ZooUserStringGetter = require 'zooniverse-user-string-getter'
 module.exports = class GeordiClient
 
   GEORDI_SERVER_URL:
+    development: 'https://geordi.staging.zooniverse.org/api/events/'
     staging: 'https://geordi.staging.zooniverse.org/api/events/'
     production: 'https://geordi.zooniverse.org/api/events/'
   
@@ -43,6 +44,8 @@ module.exports = class GeordiClient
     if config.server && @GEORDI_SERVER_URL[config.server]
       config.env = config.server
       delete config.server
+    
+    delete config.env if config.env && !@GEORDI_SERVER_URL[config.env]
       
     for property, value of config
       @[property] = value

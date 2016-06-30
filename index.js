@@ -9,6 +9,7 @@
 
   module.exports = GeordiClient = (function() {
     GeordiClient.prototype.GEORDI_SERVER_URL = {
+      development: 'https://geordi.staging.zooniverse.org/api/events/',
       staging: 'https://geordi.staging.zooniverse.org/api/events/',
       production: 'https://geordi.zooniverse.org/api/events/'
     };
@@ -48,6 +49,9 @@
       if (config.server && this.GEORDI_SERVER_URL[config.server]) {
         config.env = config.server;
         delete config.server;
+      }
+      if (config.env && !this.GEORDI_SERVER_URL[config.env]) {
+        delete config.env;
       }
       results = [];
       for (property in config) {
